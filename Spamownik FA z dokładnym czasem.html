@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <title>60s - Spamownik Ataku</title>
+  <style>
+    body {
+      background: #000;
+      color: #f00;
+      font-family: Arial, sans-serif;
+      text-align: center;
+      max-width: 800px;
+      margin: auto;
+      padding: 20px;
+    }
+
+    input, button, select {
+      padding: 10px;
+      margin: 5px 0;
+      border: none;
+      font-size: 16px;
+      box-sizing: border-box;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      margin-bottom: 15px;
+    }
+
+    button {
+      background-color: #f00;
+      color: #fff;
+      cursor: pointer;
+      border-radius: 8px;
+      transition: background-color 0.3s ease, transform 0.1s ease;
+    }
+
+    button:hover {
+      background-color: #d00;
+      transform: scale(1.05);
+    }
+
+    #status {
+      margin-top: 20px;
+      font-size: 18px;
+    }
+
+    .row {
+      display: flex;
+      justify-content: center;
+      align-items: flex-end;
+      flex-wrap: wrap;
+      gap: 20px;
+      margin-top: 20px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      min-width: 180px;
+    }
+
+    label {
+      margin-bottom: 5px;
+      font-size: 14px;
+      white-space: nowrap;
+    }
+
+    select {
+      min-width: 200px;
+    }
+
+    @media (max-width: 600px) {
+      .form-group {
+        min-width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>wklej link do ataku lub wybierz gracza z listy, ustal godzinę, interwał i/lub liczbę ataków lub użyj trybu 60s</h1>
+
+  <input type="text" id="linkInput" placeholder="Wklej tutaj link do ataku" />
+
+  <div class="row">
+    <div class="form-group" style="min-width: 100%;">
+      <select id="linkSelector" onchange="selectLink(this)">
+        <option value="">⬇️ Wybierz gracza z listy</option>
+        <!-- Lista graczy pozostaje niezmieniona -->
+  <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=3036661">Adanio</option>
+  <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1273120">Anders</option>
+  <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1371093">Angel</option>
+  <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=421182">Armani</option>
+  <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=644623">Art z ZKM</option>
+  <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=692504">Artemis Entreri</option>
+  <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=937717">Avari</option>
+  <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1825170">BawariaMaster</option>
+  <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=2146091">Bescik</option>
+  <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1206973">Blackorwhite</option>
+  <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1360295">Bolko13</option>
+  <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=3516861">Cruolelis</option>
+  <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=396931">cyklop</option>
+  <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=2512993">Damianus</option>
+  <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=25906">Dark Angel</option>
+  <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1334593">Dertiger</option>
+  <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1437476">DonDywizjon</option>
+  <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=2994381">Double U</option>
+  <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1437263">DRIFT-er</option>
+  <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=406208">Erovin</option>
+  <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=2943613">Eskel</option>
+  <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=2187176">Firewalker</option>
+  <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1344535">Fotograf</option>
+  <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=3532967">Hadess</option>
+  <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=3594708">helcor</option>
+  <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=3315451">Kabuto</option>
+  <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1437324">KLFman</option>
+  <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=3618203">Kodama</option>
+  <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=3507540">Lady Karolina</option>
+  <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=38845">Lord Nico</option>
+  <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=3512008">Marox</option>
+  <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=357817">mikol</option>
+  <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=3385171">Mimir</option>
+  <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=2898577">Muchomorek</option>
+  <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=314124">MUTSU</option>
+  <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=2880">Papa Smurf</option>
+  <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=2165885">PENETRATOR</option>
+  <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1439314">quazi</option>
+  <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1748771">Sanguis Vocare</option>
+  <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=2134832">SebsaNL</option>
+  <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=393244">ser Marcin z ZT</option>
+  <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=2530420">Shizz</option>
+  <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=3389482">Sir Kiler</option>
+  <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=369967">smigi</option>
+  <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=2512119">Spartanin</option>
+  <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=2898296">Sthern</option>
+  <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=3471417">Tatanka Yotanka</option>
+  <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1319755">wojtex a</option>
+  <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=3038326">yahoo</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label for="startTime">🕓 Zaplanuj start na</label>
+      <input type="datetime-local" id="startTime" step="1"/>
+    </div>
+
+    <div class="form-group">
+      <label for="attemptsLimit">🔁 Liczba prób (opcjonalna)</label>
+      <input type="number" id="attemptsLimit" placeholder="np. 100" min="1" />
+    </div>
+
+    <div class="form-group">
+      <label for="intervalMs">⏱️ Interwał (ms, opcjonalny)</label>
+      <input type="number" id="intervalMs" placeholder="np. 120" min="10" />
+    </div>
+
+    <div class="form-group">
+      <button onclick="planOrStart()">START</button>
+    </div>
+  </div>
+
+  <div id="status">Otworzone: 0</div>
+
+  <script>
+    let openedCount = 0;
+    let interval;
+    let countdown;
+    let secondsLeft = 60;
+    let plannedStartTimer;
+
+    function selectLink(selectElement) {
+      const selectedLink = selectElement.value;
+      if (selectedLink) {
+        document.getElementById("linkInput").value = selectedLink;
+      }
+    }
+
+    function planOrStart() {
+      const timeInput = document.getElementById("startTime").value;
+      const link = document.getElementById("linkInput").value;
+
+      if (!link) {
+        alert("Wklej najpierw link!");
+        return;
+      }
+
+      if (timeInput) {
+        const now = new Date();
+        const plannedTime = new Date(timeInput);
+
+        if (plannedTime <= now) {
+          alert("Wybrana godzina już minęła!");
+          return;
+        }
+
+        const msToStart = plannedTime - now;
+        document.getElementById("status").innerText = `Zaplanowano na ${plannedTime.toLocaleTimeString()}...`;
+        document.title = `Czeka na start o ${plannedTime.toLocaleTimeString()}`;
+
+        plannedStartTimer = setTimeout(() => {
+          startSpam(link);
+        }, msToStart);
+      } else {
+        startSpam(link);
+      }
+    }
+
+    function startSpam(link) {
+      openedCount = 0;
+      secondsLeft = 60;
+
+      const attemptsLimit = parseInt(document.getElementById("attemptsLimit").value);
+      const intervalDuration = parseInt(document.getElementById("intervalMs").value) || 120;
+
+      const limitByAttempts = !isNaN(attemptsLimit) && attemptsLimit > 0;
+
+      document.title = `${secondsLeft}s - Spamownik BK`;
+      document.getElementById('status').innerText = `Otworzone: 0`;
+
+      countdown = setInterval(() => {
+        secondsLeft--;
+        document.title = `${secondsLeft}s - Spamownik BK`;
+        if (secondsLeft <= 0) {
+          clearInterval(countdown);
+          clearInterval(interval);
+        }
+      }, 1000);
+
+      interval = setInterval(() => {
+        if ((limitByAttempts && openedCount >= attemptsLimit) || secondsLeft <= 0) {
+          clearInterval(interval);
+          clearInterval(countdown);
+          return;
+        }
+
+        const newWindow = window.open(link, '_blank');
+        if (newWindow) {
+          openedCount++;
+          document.getElementById('status').innerText = `Otworzone: ${openedCount}`;
+        } else {
+          document.getElementById('status').innerText = `Zablokowane przez przeglądarkę!`;
+          clearInterval(interval);
+          clearInterval(countdown);
+        }
+      }, intervalDuration);
+    }
+  </script>
+</body>
+</html>
