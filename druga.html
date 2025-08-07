@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8" />
+<title>newBKBLE v2.2.5 </title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    margin: 20px auto;
+    background-color: #000000;
+    color: #ddd;
+    max-width: 800px;
+  }
+  body.light-mode {
+    background-color: #d9d9d9;
+    color: #222;
+  }
+  textarea {
+    width: 100%;
+    height: 300px;
+    font-family: monospace;
+    font-size: 13px;
+    background-color: #3a3a3a;
+    color: #eee;
+    border: 1px solid #555;
+    border-radius: 4px;
+    resize: vertical;
+    box-sizing: border-box;
+  }
+  body.light-mode textarea {
+    background-color: #f0f0f0;
+    color: #222;
+    border: 1px solid #aaa;
+  }
+  button {
+    margin: 10px 5px 20px 0;
+    padding: 8px 15px;
+    font-size: 16px;
+    cursor: pointer;
+    background-color: #fbbc04;
+    border: none;
+    border-radius: 4px;
+    color: #222;
+    font-weight: bold;
+    transition: background-color 0.3s ease;
+  }
+  button:hover {
+    background-color: #d9a403;
+  }
+  body.light-mode button {
+    background-color: #2196f3;
+    color: #eee;
+  }
+  body.light-mode button:hover {
+  background-color: #0b79d0;
+}
+#copyTable {
+  background-color: #4caf50;
+  color: #fff;
+}
+#copyTable:hover {
+  background-color: #388e3c;
+}
+body.light-mode #copyTable {
+  background-color: #66bb6a;
+}
+body.light-mode #copyTable:hover {
+  background-color: #43a047;
+}
+
+
+button.danger {
+  background-color: #e53935;
+  color: #fff;
+}
+button.danger:hover {
+  background-color: #c62828;
+}
+body.light-mode button.danger {
+  background-color: #ef5350;
+  color: #fff;
+}
+body.light-mode button.danger:hover {
+  background-color: #d32f2f;
+}
+  #toggleTheme {
+    float: right;
+    margin-right: 0;
+  }
+  h1 { color: #fbbc04; margin-bottom: 10px; }
+  body.light-mode h1 { color: #2196f3; }
+  p { color: #ccc; }
+  body.light-mode p { color: #333; }
+  table {
+    border-collapse: collapse;
+    background: #3a3a3a;
+    box-shadow: 0 0 15px #111;
+    border-radius: 6px;
+    overflow: hidden;
+    width: 100%;
+    text-align: center;
+    cursor: default;
+  }
+  body.light-mode table {
+    background: #eee;
+    box-shadow: 0 0 10px #ccc;
+  }
+  #summary table, #result table { width: 100%; }
+  th, td {
+    border: 1px solid #555;
+    padding: 8px 12px;
+    color: #eee;
+    text-align: center;
+  }
+  body.light-mode th, body.light-mode td {
+    border: 1px solid #ccc;
+    color: #222;
+  }
+  th {
+    background: #fbbc04;
+    color: #222;
+    font-weight: bold;
+    cursor: pointer;
+    user-select: none;
+  }
+  body.light-mode th {
+    background: #2196f3;
+    color: #eee;
+  }
+  tr:nth-child(even) { background-color: #333; }
+  body.light-mode tr:nth-child(even) { background-color: #d9d9d9; }
+  .diff-pos { color: #4caf50; font-weight: bold; }
+  .draws-diff {color: #00d5ff;font-weight: bold;}
+  .diff-neg { color: #f44336; font-weight: bold; }
+  .zero-diff { color: #2196f3; font-weight: bold; }
+  body.light-mode .zero-diff { color: #0d47a1; }
+  .guild-imp { color: #ff4444; font-weight: bold; }
+  .guild-u { color: #66ff33; font-weight: bold; }
+  .guild-fun { color: #ffff66; font-weight: bold; }
+  .guild-default { color: #ccc; }
+  body.light-mode .guild-default { color: #555; }
+  #result p { color: #ddd; font-weight: bold; }
+  body.light-mode #result p { color: #222; }
+  #missing { margin-bottom: 20px; }
+  #checkpointInfo {
+    margin-top: 10px;
+    font-style: italic;
+    color: #bbb;
+  }
+  body.light-mode #checkpointInfo {
+    color: #666;
+  }
+</style>
+</head>
+<body>
+
+<h1>newBKBLE v2.2.5 Copyright by ©Anders 2025
+  <button id="toggleTheme" title="Tryb jasny/ciemny">Tryb jasny/ciemny</button>
+</h1>
+<p>Wklej cały ranking (np. skopiowany ze strony BK). Skrypt wyciągnie nick, zakon, poziom, łup, wygrane walki, porażki i porówna z checkpointem.</p>
+
+<textarea id="inputRanking" placeholder="Wklej ranking tutaj..."></textarea><br/>
+<button id="saveCheckpoint">Zapisz Checkpoint</button>
+<button id="compareRanking">Porównaj z Checkpoint</button>
+<button id="setAsCheckpoint">Ustaw jako checkpoint</button>
+<button id="copyTable">Kopiuj</button>
+<button id="resetAll" class="danger">RESET</button>
+
+
+<div id="missing"></div>
+<div id="summary"></div>
+<div id="checkpointInfo"></div>
+<div id="result"></div>
+
+<script>
+(() => {
+function saveCheckpointToStorage() {
+  if (!checkpointData || !checkpointTimestamp) return;
+  try {
+    localStorage.setItem('bkble_checkpointData', JSON.stringify(checkpointData));
+    localStorage.setItem('bkble_checkpointTimestamp', checkpointTimestamp.toISOString());
+  } catch(e) {
+    console.warn('Nie udało się zapisać checkpointu do localStorage', e);
+  }
+}
+
+function loadCheckpointFromStorage() {
+  try {
+    const data = localStorage.getItem('bkble_checkpointData');
+    const ts = localStorage.getItem('bkble_checkpointTimestamp');
+    if (data && ts) {
+      checkpointData = JSON.parse(data);
+      checkpointTimestamp = new Date(ts);
+      updateCheckpointInfo();
+      document.getElementById('result').innerHTML = `<p>Checkpoint załadowany (${checkpointData.length} graczy) z pamięci lokalnej.</p>`;
+    }
+  } catch(e) {
+    console.warn('Nie udało się wczytać checkpointu z localStorage', e);
+  }
+}
+const titles = ["Pan wojny","Pani wojny","Bandyta","Królewski skarbnik","Magnat","Mistrz miecza","Komendant","Niepokonany","Pretendent","Czempion","Wielki mistrz","Uczeń","Handlarz","Mistrz gildii","Dobrodziej","Bohater","Cnotliwy","Oszust","Łotr","Tyran","Adept","Weteran","Legenda","Towarzysz","Kapitan","Generał","Awanturnik","Prekursor","Niszczyciel","Najemnik","Zdobywca","Pan","Pani","Mieszczanin","Dziedzic","Szlachcic","Rycerz","Kniaź","Baronet","Baron","Wicehrabia","Książę","Margrabia","Markiz","Książę Elektor","Wielki Książę","Arcyksiążę","Bandytka","Królewska skarbniczka","Magnatka","Mistrzyni miecza","Komendantka","Niepokonana","Pretendentka","Czempionka","Wielka mistrzyni","Uczennica","Handlarka","Mistrzyni gildii","Dobrodziejka","Bohaterka","Cnotliwa","Oszustka","Łotrzyca","Tyranka","Adeptka","Weteranka","Towarzyszka","Kapitanka","Kobieta generał","Awanturniczka","Prekursorka","Niszczycielka","Najemniczka","Zdobywczyni","Mieszczanka","Dama","Panna","Szlachcianka","Baroneta","Baronowa","Grafina","Wicehrabina","Hrabina","Markiza","Margrabina","Księżna Elektor","Księżna","Arcyksiężna","Wielka Księżna"];
+titles.sort((a,b) => b.length - a.length);
+const titleRegex = new RegExp("^(" + titles.join("|") + ")\\s+", "i");
+
+let checkpointData = null;
+let checkpointTimestamp = null;  // NOWA ZMIENNA do przechowywania czasu zapisu checkpointu
+let lastComparedData = null;
+let currentSort = []; // tablica {column, asc}
+
+function removeTitle(name) {
+  return name.replace(titleRegex, "").trim();
+}
+
+function parseRanking(text) {
+  const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+  const data = [];
+  for (let line of lines) {
+    line = line.replace(/\t+/g, ' ').replace(/\s{2,}/g, ' ');
+    const parts = line.split(' ');
+    if(parts.length < 7) continue;
+
+    // Pobieramy wartości od końca:
+    const losses = parseInt(parts.pop().replace(/\./g,''),10) || 0;
+    const wins = parseInt(parts.pop().replace(/\./g,''),10) || 0;
+    const totalFights = parseInt(parts.pop().replace(/\./g,''),10) || 0;
+    const loot = parseInt(parts.pop().replace(/\./g,''),10) || 0;
+    const levelRaw = parts.pop();
+
+    // Sprawdzenie levelRaw, czy jest liczbą
+    if(!/^\d+$/.test(levelRaw)) continue;
+
+    const nameGuildRaw = parts.join(' ');
+
+    // Usuwamy tytuł jeśli jest na początku
+    const nameClean = removeTitle(nameGuildRaw);
+
+    // Ignoruj Dimple Camal
+    if(nameClean.toLowerCase().includes('dimple camal')) continue;
+
+    // Wyciągamy zakon z końca nazwy (w nawiasach [])
+    const guildMatch = nameClean.match(/(\[{1,2}.*?\]{1,2})$/);
+    const guild = guildMatch ? guildMatch[1] : "";
+    const nick = guild ? nameClean.replace(guild, '').trim() : nameClean.trim();
+
+    data.push({ nick, guild, level: parseInt(levelRaw,10), loot, wins, losses, totalFights });
+  }
+  return data;
+}
+
+
+function guildClass(guild) {
+  if (guild === '[-U-]' || guild === '[[PD]]') return 'guild-u';
+  if (guild === '[IMP]' || guild === '[Temp]') return 'guild-imp';
+  if (guild === '[F-FUN]') return 'guild-fun';
+  return 'guild-default';
+}
+
+function uniquePlayers(data){
+  const seen = new Set();
+  return data.filter(p=>{
+    const key=p.nick.toLowerCase()+'|'+p.guild;
+    if(seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+function renderSummary(data, checkpoint){
+  if(!checkpoint) return "";
+
+  const zakonyWszystkie = ['[-U-]', '[IMP]', '[F-FUN]', '[[PD]]', '[Temp]'];
+  const summary = {};
+  const cpMap = new Map(checkpoint.map(p => [p.nick, p]));
+  const newMap = new Map(data.map(p => [p.nick, p]));
+
+  for (const z of zakonyWszystkie) {
+    summary[z] = { count: 0, lootSum: 0 };
+  }
+  summary['other'] = { count: 0, lootSum: 0 };
+
+  for (const [nick, now] of newMap.entries()) {
+    const cp = cpMap.get(nick);
+    if (!cp) continue;
+    const diff = now.loot - cp.loot;
+    if (diff <= 0) continue;
+    let guild = now.guild || 'other';
+    if (!zakonyWszystkie.includes(guild)) guild = 'other';
+    summary[guild].count++;
+    summary[guild].lootSum += diff;
+  }
+
+  // Filtruj tylko zakony, które faktycznie mają graczy z przyrostem
+  const aktywneZakony = zakonyWszystkie.filter(z => summary[z].count > 0);
+  const pozostałe = summary['other'].count > 0;
+
+  let totalCount = 0, totalLoot = 0;
+  for(const z of [...aktywneZakony, ...(pozostałe ? ['other'] : [])]){
+    totalCount += summary[z].count;
+    totalLoot += summary[z].lootSum;
+  }
+
+  let html='<table><tr><th>Zakon</th><th>Aktywnych graczy</th><th>Łączny przyrost łupu</th></tr>';
+  for(let z of aktywneZakony){
+    html+=`<tr><td class="${guildClass(z)}">${z}</td><td>${summary[z].count}</td><td>${summary[z].lootSum.toLocaleString()}</td></tr>`;
+  }
+  if (pozostałe) {
+    html+=`<tr><td class="${guildClass('other')}">Pozostałe</td><td>${summary['other'].count}</td><td>${summary['other'].lootSum.toLocaleString()}</td></tr>`;
+  }
+  html+=`<tr><td style="font-weight:bold;">Razem</td><td style="font-weight:bold;">${totalCount}</td><td style="font-weight:bold;">${totalLoot.toLocaleString()}</td></tr>`;
+  html+='</table><br/>';
+  return html;
+}
+
+function renderTable(data, checkpoint, sortCol=null, asc=true){
+  if(data.length === 0) return "<p>Brak danych.</p>";
+
+let merged = data.map(p => {
+  let cp = checkpoint?.find(x => x.nick === p.nick);
+  let lootDiff = cp ? p.loot - cp.loot : null;
+  let winsDiff = cp ? p.wins - cp.wins : null;
+  let lossesDiff = cp ? p.losses - cp.losses : null;
+
+  let draws = p.totalFights - (p.wins + p.losses);
+  let cpDraws = cp ? cp.totalFights - (cp.wins + cp.losses) : null;
+  let drawsDiff = (cpDraws !== null) ? draws - cpDraws : null;
+
+  return { ...p, lootDiff, winsDiff, lossesDiff, drawsDiff, draws };
+});
+
+
+  if(sortCol !== null){
+    merged.sort((a,b) => {
+      let valA, valB;
+      switch(sortCol){
+        case 0: // # - sort po nicku
+        case 2:
+          valA = a.nick.toLowerCase();
+          valB = b.nick.toLowerCase();
+          break;
+        case 1: // +Łup
+          valA = a.lootDiff;
+          valB = b.lootDiff;
+          if(valA === null || valA === undefined) return 1;
+          if(valB === null || valB === undefined) return -1;
+          break;
+        case 3: // Zakon
+          valA = a.guild.toLowerCase();
+          valB = b.guild.toLowerCase();
+          break;
+        case 4: // Poziom
+          valA = a.level;
+          valB = b.level;
+          break;
+        case 5: // +Wygrane
+          valA = a.winsDiff;
+          valB = b.winsDiff;
+          if(valA === null || valA === undefined) return 1;
+          if(valB === null || valB === undefined) return -1;
+          break;
+        case 6: // +Remisy
+         valA = a.drawsDiff;
+         valB = b.drawsDiff;
+         if(valA === null || valA === undefined) return 1;
+         if(valB === null || valB === undefined) return -1;
+         break;
+        case 7: // +Porażki
+          valA = a.lossesDiff;
+          valB = b.lossesDiff;
+          if(valA === null || valA === undefined) return 1;
+          if(valB === null || valB === undefined) return -1;
+          break;
+        case 8: // Łup obecnie
+          valA = a.loot;
+          valB = b.loot;
+          break;
+        default:
+          valA = 0; valB = 0;
+      }
+      if(typeof valA === "string" && typeof valB === "string") {
+        return asc ? valA.localeCompare(valB) : valB.localeCompare(valA);
+      } else {
+        return asc ? valA - valB : valB - valA;
+      }
+    });
+  } else {
+    merged.sort((a,b) => (b.lootDiff||0) - (a.lootDiff||0));
+  }
+
+  let html='<table id="resultTable"><thead><tr>';
+  const headers = ['#','+Łup','Nick','Zakon','Poziom','+Wygrane','+Remisy','+Porażki','Łup obecnie'];
+  headers.forEach((h,i) => {
+    html += `<th data-col="${i}">${h}${(currentSort.column === i) ? (currentSort.asc ? " ▲" : " ▼") : ""}</th>`;
+  });
+  html += '</tr></thead><tbody>';
+
+  merged.forEach((p,i)=>{
+    let lootDisp = p.lootDiff == null ? '--' :
+      p.lootDiff > 0 ? `<span class="diff-pos">${p.lootDiff.toLocaleString()}</span>` :
+      p.lootDiff < 0 ? `<span class="diff-neg">${p.lootDiff.toLocaleString()}</span>` :
+      `<span class="zero-diff">0</span>`;
+
+    let winDisp = p.winsDiff == null ? '--' :
+      p.winsDiff > 0 ? `<span class="diff-pos">${p.winsDiff}</span>` :
+      p.winsDiff < 0 ? `<span class="diff-neg">${p.winsDiff}</span>` :
+      `<span class="zero-diff">0</span>`;
+
+let drawDisp = p.drawsDiff == null ? '--' :
+  p.drawsDiff > 0 ? `<span class="draws-diff">${p.drawsDiff}</span>` :
+  p.drawsDiff < 0 ? `<span class="diff-neg">${p.drawsDiff}</span>` :
+  `<span class="zero-diff">0</span>`;
+
+;
+
+let loseDisp = p.lossesDiff == null ? '--' :
+  p.lossesDiff > 0 ? `<span class="diff-neg">${p.lossesDiff}</span>` :
+  p.lossesDiff === 0 ? `<span class="zero-diff">0</span>` :
+  `<span class="diff-pos">${p.lossesDiff}</span>`;
+
+html+=`<tr><td>${i+1}</td><td>${lootDisp}</td><td>${p.nick}</td><td class="${guildClass(p.guild)}">${p.guild}</td><td>${p.level}</td><td>${winDisp}</td><td>${drawDisp}</td><td>${loseDisp}</td><td>${p.loot.toLocaleString()}</td></tr>`;
+
+  });
+  html+='</tbody></table>';
+  return html;
+}
+
+function attachSortHandlers(){
+  const table = document.getElementById('resultTable');
+  if(!table) return;
+  const headers = table.querySelectorAll('th');
+  headers.forEach(th => {
+    th.onclick = () => {
+      const col = parseInt(th.dataset.col);
+      if(currentSort.column === col){
+        currentSort.asc = !currentSort.asc;
+      } else {
+        currentSort.column = col;
+        currentSort.asc = true;
+      }
+      if(!checkpointData || !lastComparedData) return;
+      document.getElementById('result').innerHTML = renderTable(lastComparedData, checkpointData, currentSort.column, currentSort.asc);
+      attachSortHandlers();
+    };
+  });
+}
+
+const textarea = document.getElementById('inputRanking');
+
+textarea.ondragover = (e) => {
+  e.preventDefault();
+};
+
+textarea.ondrop = (e) => {
+  e.preventDefault();
+  const file = e.dataTransfer.files[0];
+  if(!file) return;
+  if(!file.name.toLowerCase().endsWith('.txt')) {
+    alert('Proszę upuścić plik tekstowy (.txt)');
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = () => {
+    textarea.value = reader.result;
+  };
+  reader.readAsText(file);
+};
+
+document.getElementById('saveCheckpoint').onclick=()=> {
+  checkpointData=uniquePlayers(parseRanking(textarea.value));
+  checkpointTimestamp = new Date();saveCheckpointToStorage();  // Zapis czasu checkpointu
+  document.getElementById('result').innerHTML=`<p>Checkpoint zapisany (${checkpointData.length} graczy).</p>`;
+  document.getElementById('summary').innerHTML='';
+  document.getElementById('missing').innerHTML='';
+  textarea.value='';
+  lastComparedData=null;
+  currentSort={column:null, asc:true};
+  updateCheckpointInfo();
+};
+
+document.getElementById('compareRanking').onclick=()=> {
+  let newData=uniquePlayers(parseRanking(textarea.value));
+  lastComparedData=newData;
+  if(!checkpointData){
+    document.getElementById('result').innerHTML=`<p>Nie ustawiono checkpointu.</p>`;
+    document.getElementById('summary').innerHTML='';
+    document.getElementById('missing').innerHTML='';
+    textarea.value='';
+    return;
+  }
+  // Wyświetl podsumowanie i tabelę
+  document.getElementById('summary').innerHTML = renderSummary(newData, checkpointData);
+
+  // Znajdź nieujętych graczy
+  const cpNicks = new Set(checkpointData.map(p=>p.nick));
+  const newNicks = new Set(newData.map(p=>p.nick));
+  const missingPlayers = [...cpNicks].filter(n => !newNicks.has(n));
+  if (missingPlayers.length > 0) {
+    const listItems = missingPlayers.map(nick => `<li>${nick}</li>`).join('');
+    document.getElementById('missing').innerHTML = `
+      <div style="margin-top:10px;">
+        <button onclick="const x=document.getElementById('missingList'); x.style.display = x.style.display === 'none' ? 'block' : 'none';">
+          Gracze pominięci (${missingPlayers.length} graczy)
+        </button>
+        <div id="missingList" style="display:none; margin-top:10px;">
+          <h3 style="color:#f44336;">Nieujęci w podsumowaniu (${missingPlayers.length} graczy):</h3>
+          <ul style="list-style-type: disc; padding-left: 20px;">${listItems}</ul>
+        </div>
+      </div>`;
+  } else {
+    document.getElementById('missing').innerHTML = '';
+  }
+
+  document.getElementById('result').innerHTML = renderTable(newData, checkpointData);
+  attachSortHandlers();
+  textarea.value='';
+  currentSort={column:null, asc:true};
+  updateCheckpointInfo();
+};
+
+// Poprawka dla "Ustaw jako checkpoint"
+document.getElementById('setAsCheckpoint').onclick=()=> {
+  let dataToSet = null;
+  if(textarea.value.trim().length > 0) {
+    // Parsuj z textarea jeśli coś jest wklejone
+    dataToSet = uniquePlayers(parseRanking(textarea.value));
+  } else if(lastComparedData) {
+    // Jeśli textarea pusta, ustaw z ostatnio porównanego rankingu
+    dataToSet = lastComparedData;
+  }
+  if(!dataToSet || dataToSet.length === 0) {
+    document.getElementById('result').innerHTML = '<p>Brak danych do ustawienia jako checkpoint.</p>';
+    return;
+  }
+  checkpointData = dataToSet;
+  checkpointTimestamp = new Date();  // Zapis czasu checkpointu
+  saveCheckpointToStorage(); // <-- dodaj to TUTAJ
+  updateCheckpointInfo();
+  document.getElementById('result').innerHTML = `<p>Aktualny ranking ustawiony jako checkpoint (${checkpointData.length} graczy).</p>`;
+  document.getElementById('summary').innerHTML = '';
+  document.getElementById('missing').innerHTML = '';
+  textarea.value = '';
+  currentSort = { column:null, asc:true };
+  updateCheckpointInfo();
+};
+
+document.getElementById('resetAll').onclick=()=> {
+  checkpointData = null;
+  checkpointTimestamp = null;
+  lastComparedData = null;
+  document.getElementById('result').innerHTML = '';
+  document.getElementById('summary').innerHTML = '';
+  document.getElementById('missing').innerHTML = '';
+  document.getElementById('checkpointInfo').innerHTML = '';
+  textarea.value = '';
+  currentSort = { column:null, asc:true };
+};
+
+const toggleBtn = document.getElementById('toggleTheme');
+
+// Ustaw właściwy tekst przy pierwszym załadowaniu
+toggleBtn.textContent = document.body.classList.contains('light-mode') ? 'Tryb ciemny' : 'Tryb jasny';
+
+// Obsługa kliknięcia
+toggleBtn.onclick = () => {
+  document.body.classList.toggle('light-mode');
+  toggleBtn.textContent = document.body.classList.contains('light-mode') ? 'Tryb ciemny' : 'Tryb jasny';
+};
+
+// Funkcja formatująca czas od checkpointu
+function timeSince(date) {
+  if (!date) return '';
+  const seconds = Math.floor((new Date() - date) / 1000);
+  if (seconds < 60) return seconds + " sekund temu";
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return minutes + " minut temu";
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return hours + " godzin temu";
+  const days = Math.floor(hours / 24);
+  return days + " dni temu";
+}
+
+// Aktualizacja informacji o checkpoint
+function updateCheckpointInfo(){
+  const el = document.getElementById('checkpointInfo');
+  if(!checkpointData || !checkpointTimestamp) {
+  saveCheckpointToStorage();
+  el.innerHTML = '';
+  return;
+}
+  const timeStr = checkpointTimestamp.toLocaleString('pl-PL', { year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', second:'2-digit' });
+  el.innerHTML = `<p>Checkpoint zapisany: <b>${timeStr}</b> (${timeSince(checkpointTimestamp)})</p>`;
+}
+
+// Odświeżaj czas co minutę, jeśli checkpoint jest ustawiony
+setInterval(() => {
+  if(checkpointTimestamp){
+    updateCheckpointInfo();
+  }
+}, 60000);
+loadCheckpointFromStorage();
+})();
+document.getElementById('copyTable').addEventListener('click', () => {
+  const table = document.querySelector('#result table');
+  if (!table) return alert('Brak tabeli do skopiowania.');
+
+  const rows = Array.from(table.querySelectorAll('tr')).slice(1); // pomijamy nagłówek
+
+  const filteredRows = rows.filter(row => {
+    const cellText = row.cells[1]?.textContent.trim() || '';
+    const number = parseInt(cellText.replace(/[^\d-]/g, ''), 10);
+    return number > 0;
+  });
+
+  if(filteredRows.length === 0) {
+    alert('Brak wierszy z wartością większą niż 0 w kolumnie +Łup.');
+    return;
+  }
+
+  const text = filteredRows.map(row => {
+    return Array.from(row.cells).map(cell => cell.textContent.trim()).join('\t');
+  }).join('\n');
+
+  navigator.clipboard.writeText(text).then(() => {
+    alert('Tabela została skopiowana.');
+  }).catch(err => {
+    alert('Nie udało się skopiować tabeli.');
+    console.error(err);
+  });
+});
+
+</script>
+</body>
+</html>
