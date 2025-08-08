@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <title>Wyciągacz Bazowych Atrybutów BK + Statystyki (wiele profili) + Sortowanie</title>
+  <style>
+    body {
+      background-color: #121212;
+      color: #f0f0f0;
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      max-width: 1200px;
+      margin: auto;
+      overflow-x: auto;
+    }
+    textarea {
+      width: 100%;
+      height: 200px;
+      background: #1e1e1e;
+      color: #fff;
+      border: 1px solid #333;
+      padding: 10px;
+      margin-bottom: 10px;
+      font-family: monospace;
+      resize: vertical;
+    }
+    button {
+      padding: 10px 15px;
+      background-color: #ffa500;
+      border: none;
+      color: #121212;
+      cursor: pointer;
+      margin-right: 5px;
+      border-radius: 6px;
+      font-weight: bold;
+      transition: background-color 0.3s ease;
+    }
+    button:hover {
+      background-color: #e59400;
+    }
+    #resetBtn {
+      background-color: #ff4444;
+      color: #fff;
+    }
+    #resetBtn:hover {
+      background-color: #cc3333;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      white-space: nowrap;
+    }
+    th, td {
+      border: 1px solid #333;
+      padding: 8px;
+      text-align: center;
+    }
+    th {
+      background-color: #222;
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      cursor: pointer;
+    }
+    .green { color: #00ff00; }
+    .red { color: #ff4444; }
+    .diff-zero { color: #00bfff; }
+  </style>
+</head>
+<body>
+
+<h1>Wyciągacz Bazowych Atrybutów BK + Statystyki (wiele profili)</h1>
+
+<textarea id="inputHTML" placeholder="Wklej tutaj wiele profili HTML..."></textarea>
+<br>
+<button id="extractBtn" onclick="extractMultipleAndClear()">Wyciągnij dane</button>
+<button onclick="saveCheckpointAndClear()">Zapisz checkpoint</button>
+<button id="resetBtn" onclick="resetCheckpoint()">RESET</button>
+
+<div id="result"></div>
+
+<script>
+const attrKeys = [
+  "Siła",
+  "Zręczność",
+  "Kondycja",
+  "Szczęście",
+  "Używanie broni",
+  "Umiejętności obronne"
+];
+
+const statKeys = {
+  "Poziom:": "Poziom",
+  "Łup \\(zdobyty\\):": "Łup zdobyty",
+  "Łup \\(stracony\\):": "Łup stracony",
+  "Wygranych turniej&oacute;w:": "Wygranych turniejów",
+  "Zwycięstwa:": "Zwycięstwa",
+  "Remisy:": "Remisy",
+  "Porażki:": "Porażki"
+};
+
+function parseSingleProfile(html) {
+  let nick = "Nieznany";
+  const nickMatch = html.match(/<div>\s*.*?<br\s*\/>\s*([^<]+)\s*<\/div>/i);
+  if (nickMatch) {
+    nick = nickMatch[1].trim();
+  }
+
+  const total = {};
+  for (let attr of attrKeys) {
+    const regex = new RegExp(`<th[^>]*>\\s*${attr}\\s*<\\/th>\\s*<td[^>]*>\\s*(\\d+)`, "i");
+    const match = html.match(regex);
+    total[attr] = match ? parseInt(match[1]) : 0;
+  }
+
+  const bonusyPkt = {};
+  for (let attr of attrKeys) bonusyPkt[attr] = 0;
+
+  const itemTips = [...html.matchAll(/item\.store\('tip:text',\s*'(.*?)'\);/gs)];
+
+  for (const [, tipRaw] of itemTips) {
+    const tip = tipRaw
+      .replace(/\\\\/g, "\\")
+      .replace(/\\"/g, '"')
+      .replace(/\\'/g, "'");
+    if (/kopia/i.test(tip) || /Żądło/i.test(tip)) continue;
+    for (let attr of attrKeys) {
+      const regAttr = new RegExp(`<th[^>]*>\\s*${attr}\\s*<\\/th>\\s*<td[^>]*>\\s*(\\d+)`, "i");
+      const m = tip.match(regAttr);
+      if (m) bonusyPkt[attr] += parseInt(m[1]);
+    }
+  }
+
+  let bonusProcSzczescie = 0;
+  const modifyLuckMatch = html.match(/"ModifyLuck"\s*:\s*(\d+)/i);
+  if (modifyLuckMatch) {
+    bonusProcSzczescie = parseInt(modifyLuckMatch[1]) / 100;
+  }
+
+  const base = {};
+  const bonusProcWPkt = {};
+  const suma = {};
+
+  for (let attr of attrKeys) {
+    if (attr === "Szczęście") {
+      base[attr] = Math.ceil(total[attr] / (1 + bonusProcSzczescie)) - bonusyPkt[attr];
+      bonusProcWPkt[attr] = Math.round((base[attr] + bonusyPkt[attr]) * bonusProcSzczescie);
+      suma[attr] = base[attr] + bonusyPkt[attr] + bonusProcWPkt[attr];
+    } else {
+      base[attr] = total[attr] - bonusyPkt[attr];
+      bonusProcWPkt[attr] = 0;
+      suma[attr] = total[attr];
+    }
+  }
+
+  const stats = {};
+  for (let key in statKeys) {
+    const regex = new RegExp(`<th[^>]*>\\s*${key}\\s*<\\/th>\\s*<td[^>]*>\\s*([\\d\\.]+)`, "i");
+    const match = html.match(regex);
+    stats[statKeys[key]] = match ? parseInt(match[1].replace(/\./g, "")) : 0;
+  }
+
+  return { nick, base, suma, stats };
+}
+
+function formatDiff(diff, statName) {
+  if (diff === null) return "";
+  if (diff === 0) return `<span class="diff-zero">0</span>`;
+  if (statName === "Łup stracony" || statName === "Porażki") {
+    return diff > 0 ? `<span class="red">${diff}</span>` : `<span class="green">${diff}</span>`;
+  }
+  return diff > 0 ? `<span class="green">${diff}</span>` : `<span class="red">${diff}</span>`;
+}
+
+function extractMultipleAndClear() {
+  extractMultiple();
+  document.getElementById("inputHTML").value = "";
+}
+
+function saveCheckpointAndClear() {
+  saveCheckpoint();
+  document.getElementById("inputHTML").value = "";
+}
+
+function extractMultiple() {
+  const allHTML = document.getElementById("inputHTML").value;
+
+  if (!allHTML.trim()) {
+    alert("Wklej kod profili do pola tekstowego.");
+    return;
+  }
+
+  const profilesRaw = allHTML.split(/(?=<!DOCTYPE html PUBLIC)/i);
+
+  const checkpoint = JSON.parse(localStorage.getItem("bkCheckpoint") || "{}");
+  const checkpointBase = checkpoint.base || {};
+  const checkpointStats = checkpoint.stats || {};
+
+  const allResults = [];
+
+  for (const profRaw of profilesRaw) {
+    if (!profRaw.trim()) continue;
+    try {
+      const parsed = parseSingleProfile(profRaw);
+      allResults.push(parsed);
+    } catch {}
+  }
+
+  if (allResults.length === 0) {
+    document.getElementById("result").innerHTML = "<p>Nie znaleziono żadnych poprawnych profili.</p>";
+    return;
+  }
+
+  const baseHeaders = attrKeys.map(a => a);
+  const statsHeaders = Object.values(statKeys);
+  const allHeaders = [...baseHeaders, ...statsHeaders];
+
+  let html = `<table id="dataTable"><thead><tr><th>Nick</th>`;
+
+  for (const header of allHeaders) {
+    html += `<th>${header}</th><th>Δ</th>`;
+  }
+  html += `</tr></thead><tbody>`;
+
+  for (const player of allResults) {
+    html += `<tr><td>${player.nick}</td>`;
+    for (const attr of baseHeaders) {
+      const val = player.base[attr] ?? 0;
+      const diff = checkpointBase[player.nick]?.[attr] !== undefined ? val - checkpointBase[player.nick][attr] : null;
+      html += `<td>${val}</td><td>${formatDiff(diff, attr)}</td>`;
+    }
+    for (const stat of statsHeaders) {
+      const val = player.stats[stat] ?? 0;
+      const diff = checkpointStats[player.nick]?.[stat] !== undefined ? val - checkpointStats[player.nick][stat] : null;
+      html += `<td>${val}</td><td>${formatDiff(diff, stat)}</td>`;
+    }
+    html += "</tr>";
+  }
+  html += "</tbody></table>";
+
+  document.getElementById("result").innerHTML = html;
+
+  window.currentData = { base: {}, stats: {} };
+  for (const p of allResults) {
+    window.currentData.base[p.nick] = p.base;
+    window.currentData.stats[p.nick] = p.stats;
+  }
+
+  document.getElementById("extractBtn").textContent = "Porównaj";
+
+  addTableSorting();
+}
+
+function saveCheckpoint() {
+  if (!window.currentData) {
+    alert("Brak danych do zapisu. Najpierw wyciągnij dane.");
+    return;
+  }
+  localStorage.setItem("bkCheckpoint", JSON.stringify(window.currentData));
+  alert("Checkpoint zapisany!");
+  document.getElementById("extractBtn").textContent = "Porównaj";
+}
+
+function resetCheckpoint() {
+  localStorage.removeItem("bkCheckpoint");
+  document.getElementById("inputHTML").value = "";
+  document.getElementById("result").innerHTML = "";
+  alert("Checkpoint zresetowany!");
+  document.getElementById("extractBtn").textContent = "Wyciągnij dane";
+}
+
+function addTableSorting() {
+  const table = document.getElementById("dataTable");
+  const headers = table.querySelectorAll("th");
+  headers.forEach((header, index) => {
+    header.addEventListener("click", () => {
+      sortTableByColumn(table, index);
+    });
+  });
+}
+
+function sortTableByColumn(table, columnIndex) {
+  const tbody = table.tBodies[0];
+  const rows = Array.from(tbody.querySelectorAll("tr"));
+  const isNumeric = !isNaN(rows[0].cells[columnIndex].innerText.trim().replace(",", "."));
+  const currentSort = table.dataset.sortColumn == columnIndex ? table.dataset.sortOrder : null;
+  const newSortOrder = currentSort === "asc" ? "desc" : "asc";
+
+  rows.sort((a, b) => {
+    let aText = a.cells[columnIndex].innerText.trim();
+    let bText = b.cells[columnIndex].innerText.trim();
+    if (isNumeric) {
+      aText = parseFloat(aText.replace(",", ".")) || 0;
+      bText = parseFloat(bText.replace(",", ".")) || 0;
+    }
+    if (aText > bText) return newSortOrder === "asc" ? 1 : -1;
+    if (aText < bText) return newSortOrder === "asc" ? -1 : 1;
+    return 0;
+  });
+
+  rows.forEach(row => tbody.appendChild(row));
+
+  table.dataset.sortColumn = columnIndex;
+  table.dataset.sortOrder = newSortOrder;
+}
+
+document.addEventListener("dragover", e => {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = "copy";
+});
+document.addEventListener("drop", e => {
+  e.preventDefault();
+  const file = e.dataTransfer.files[0];
+  if (file && file.type === "text/plain") {
+    const reader = new FileReader();
+    reader.onload = event => {
+      document.getElementById("inputHTML").value = event.target.result;
+      extractMultiple();
+    };
+    reader.readAsText(file);
+  }
+});
+</script>
+
+</body>
+</html>
