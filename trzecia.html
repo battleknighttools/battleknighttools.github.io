@@ -9,7 +9,6 @@
       color: #f0f0f0;
       font-family: Arial, sans-serif;
       padding: 20px;
-      max-width: 1200px;
       margin: auto;
       overflow-x: auto;
     }
@@ -46,26 +45,45 @@
       background-color: #cc3333;
     }
     table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 20px;
-      white-space: nowrap;
-    }
-    th, td {
-      border: 1px solid #333;
-      padding: 8px;
-      text-align: center;
-    }
-    th {
-      background-color: #222;
-      position: sticky;
-      top: 0;
-      z-index: 2;
-      cursor: pointer;
-    }
-    .green { color: #00ff00; }
-    .red { color: #ff4444; }
-    .diff-zero { color: #00bfff; }
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+  white-space: nowrap;
+}
+
+th, td {
+  border: 1px solid #333;
+  padding: 8px;
+  text-align: center;
+}
+
+th {
+  background-color: #ffa500; /* jasnopomarańczowy nagłówek */
+  color: #121212; /* ciemny tekst dla kontrastu */
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  cursor: pointer;
+}
+
+/* Kolory naprzemienne wierszy */
+tbody tr:nth-child(odd) {
+  background-color: #000000; /* czarny */
+}
+tbody tr:nth-child(even) {
+  background-color: #1a1a1a; /* bardzo ciemnoszary */
+}
+
+.green { color: #00ff00; }
+.red { color: #ff4444; }
+.diff-zero { color: #00bfff; }
+
+/* Podświetlenie tekstu klikniętego wiersza (bez zmiany tła) */
+.highlighted {
+  color: #ffb347 !important; /* jasnopomarańczowy */
+  font-weight: bold;         /* pogrubienie */
+}
+
   </style>
 </head>
 <body>
@@ -107,6 +125,13 @@ function parseSingleProfile(html) {
     nick = nickMatch[1].trim();
   }
 
+  // 🆕 wyciąganie zakonu
+  let zakon = "";
+  const zakonMatch = html.match(/<th[^>]*>\s*Zakon\s*<\/th>\s*<td[^>]*>\s*<a[^>]*>([^<]+)<\/a>/i);
+  if (zakonMatch) {
+    zakon = zakonMatch[1].trim();
+  }
+
   const total = {};
   for (let attr of attrKeys) {
     const regex = new RegExp(`<th[^>]*>\\s*${attr}\\s*<\\/th>\\s*<td[^>]*>\\s*(\\d+)`, "i");
@@ -118,13 +143,12 @@ function parseSingleProfile(html) {
   for (let attr of attrKeys) bonusyPkt[attr] = 0;
 
   const itemTips = [...html.matchAll(/item\.store\('tip:text',\s*'(.*?)'\);/gs)];
-
   for (const [, tipRaw] of itemTips) {
     const tip = tipRaw
       .replace(/\\\\/g, "\\")
       .replace(/\\"/g, '"')
       .replace(/\\'/g, "'");
-    if (/kopia/i.test(tip) || /Żądło/i.test(tip)) continue;
+    if (/kopia/i.test(tip) || /Żądło/i.test(tip) || /lanca/i.test(tip) || /rozpłatacz tarcz/i.test(tip)) continue;
     for (let attr of attrKeys) {
       const regAttr = new RegExp(`<th[^>]*>\\s*${attr}\\s*<\\/th>\\s*<td[^>]*>\\s*(\\d+)`, "i");
       const m = tip.match(regAttr);
@@ -161,7 +185,7 @@ function parseSingleProfile(html) {
     stats[statKeys[key]] = match ? parseInt(match[1].replace(/\./g, "")) : 0;
   }
 
-  return { nick, base, suma, stats };
+  return { nick, zakon, base, suma, stats };
 }
 
 function formatDiff(diff, statName) {
@@ -185,20 +209,17 @@ function saveCheckpointAndClear() {
 
 function extractMultiple() {
   const allHTML = document.getElementById("inputHTML").value;
-
   if (!allHTML.trim()) {
     alert("Wklej kod profili do pola tekstowego.");
     return;
   }
 
   const profilesRaw = allHTML.split(/(?=<!DOCTYPE html PUBLIC)/i);
-
   const checkpoint = JSON.parse(localStorage.getItem("bkCheckpoint") || "{}");
   const checkpointBase = checkpoint.base || {};
   const checkpointStats = checkpoint.stats || {};
 
   const allResults = [];
-
   for (const profRaw of profilesRaw) {
     if (!profRaw.trim()) continue;
     try {
@@ -216,15 +237,14 @@ function extractMultiple() {
   const statsHeaders = Object.values(statKeys);
   const allHeaders = [...baseHeaders, ...statsHeaders];
 
-  let html = `<table id="dataTable"><thead><tr><th>Nick</th>`;
-
+  let html = `<table id="dataTable"><thead><tr><th>Nick</th><th>Zakon</th>`;
   for (const header of allHeaders) {
-    html += `<th>${header}</th><th>Δ</th>`;
+    html += `<th>${header}</th><th>&#8645;</th>`; // ⇅
   }
   html += `</tr></thead><tbody>`;
 
   for (const player of allResults) {
-    html += `<tr><td>${player.nick}</td>`;
+    html += `<tr><td>${player.nick}</td><td>${player.zakon}</td>`;
     for (const attr of baseHeaders) {
       const val = player.base[attr] ?? 0;
       const diff = checkpointBase[player.nick]?.[attr] !== undefined ? val - checkpointBase[player.nick][attr] : null;
@@ -248,8 +268,26 @@ function extractMultiple() {
   }
 
   document.getElementById("extractBtn").textContent = "Porównaj";
-
   addTableSorting();
+
+  addRowHighlighting();
+}
+
+function addRowHighlighting() {
+  const table = document.getElementById("dataTable");
+  if (!table) return;
+  const rows = table.querySelectorAll("tbody tr");
+  rows.forEach(row => {
+    const nickCell = row.cells[0];
+    if (!nickCell) return;
+    nickCell.style.cursor = "pointer";
+    nickCell.addEventListener("click", () => {
+      // usuń podświetlenie ze wszystkich wierszy
+      rows.forEach(r => r.classList.remove("highlighted"));
+      // dodaj podświetlenie tylko do klikniętego wiersza
+      row.classList.add("highlighted");
+    });
+  });
 }
 
 function saveCheckpoint() {
@@ -300,7 +338,6 @@ function sortTableByColumn(table, columnIndex) {
   });
 
   rows.forEach(row => tbody.appendChild(row));
-
   table.dataset.sortColumn = columnIndex;
   table.dataset.sortOrder = newSortOrder;
 }
@@ -324,5 +361,4 @@ document.addEventListener("drop", e => {
 </script>
 
 </body>
-
 </html>
