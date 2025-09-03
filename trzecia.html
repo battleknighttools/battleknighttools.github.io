@@ -44,56 +44,116 @@
     #resetBtn:hover {
       background-color: #cc3333;
     }
+	#exportBtn {
+  background-color: #008CBA;
+  color: white;
+}
+#exportBtn:hover {
+    background-color: #007B9A;
+}
     table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      white-space: nowrap;
+    }
+    th, td {
+      border: 1px solid #333;
+      padding: 8px;
+      text-align: center;
+    }
+    th {
+      background-color: #ffa500;
+      color: #121212;
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      cursor: pointer;
+    }
+    tbody tr:nth-child(odd) { background-color: #000000; }
+    tbody tr:nth-child(even) { background-color: #1a1a1a; }
+
+    .green { color: #00ff00; }
+    .red { color: #ff4444; }
+    .diff-zero { color: #00bfff; }
+    .highlighted {
+      color: #ffb347 !important;
+      font-weight: bold;
+    }
+
+    /* Prawy panel aliasów */
+    #aliasManager {
+      background: #1e1e1e;
+      border: 1px solid #333;
+      border-radius: 6px;
+      padding: 10px;
+      height: 200px;          /* dopasowane do textarea */
+      overflow-y: auto;
+    }
+    #aliasManager h3 {
+      margin: 0 0 8px 0;
+      font-size: 14px;
+      color: #ffd28a;
+    }
+#aliasManager table {
   width: 100%;
+  margin-top: 10px;
   border-collapse: collapse;
-  margin-top: 20px;
-  white-space: nowrap;
 }
 
-th, td {
+#aliasManager th, #aliasManager td {
   border: 1px solid #333;
-  padding: 8px;
+  padding: 6px;
   text-align: center;
 }
 
-th {
-  background-color: #ffa500; /* jasnopomarańczowy nagłówek */
-  color: #121212; /* ciemny tekst dla kontrastu */
-  position: sticky;
-  top: 0;
-  z-index: 2;
-  cursor: pointer;
+/* Nagłówek tabeli aliasów */
+#aliasManager th {
+  background-color: #ffa500; /* pomarańczowy jak reszta nagłówków */
+  color: #121212;             /* czarny tekst */
+  font-weight: bold;
 }
 
 /* Kolory naprzemienne wierszy */
-tbody tr:nth-child(odd) {
-  background-color: #000000; /* czarny */
+#aliasManager tbody tr:nth-child(odd) {
+  background-color: #000;      /* czarny */
+  color: #fff;                 /* biały tekst */
 }
-tbody tr:nth-child(even) {
-  background-color: #1a1a1a; /* bardzo ciemnoszary */
-}
-
-.green { color: #00ff00; }
-.red { color: #ff4444; }
-.diff-zero { color: #00bfff; }
-
-/* Podświetlenie tekstu klikniętego wiersza (bez zmiany tła) */
-.highlighted {
-  color: #ffb347 !important; /* jasnopomarańczowy */
-  font-weight: bold;         /* pogrubienie */
+#aliasManager tbody tr:nth-child(even) {
+  background-color: #1a1a1a;   /* bardzo ciemnoszary */
+  color: #fff;                 /* biały tekst */
 }
 
+
+    /* Kontener 80/20 */
+    .topbar {
+      display: flex;
+      gap: 10px;
+      align-items: stretch;
+      margin-bottom: 10px;
+    }
+    .topbar .left { flex: 4; }
+    .topbar .right { flex: 1; }
   </style>
 </head>
 <body>
 
 <h1>Wyciągacz Bazowych Atrybutów BK + Statystyki (wiele profili)</h1>
 
-<textarea id="inputHTML" placeholder="Wklej tutaj wiele profili HTML..."></textarea>
-<br>
+<!-- 80% / 20% -->
+<div class="topbar">
+  <div class="left">
+    <textarea id="inputHTML" placeholder="Wklej tutaj wiele profili HTML..."></textarea>
+  </div>
+  <div class="right">
+    <div id="aliasManager"></div>
+  </div>
+</div>
+
 <button id="extractBtn" onclick="extractMultipleAndClear()">Wyciągnij dane</button>
 <button onclick="saveCheckpointAndClear()">Zapisz checkpoint</button>
+<!-- WSTAW TEN PRZYCISK -->
+<button id="exportBtn" onclick="exportTableToCSV('dane_bk.csv')">Eksportuj do CSV</button>
 <button id="resetBtn" onclick="resetCheckpoint()">RESET</button>
 
 <div id="result"></div>
@@ -107,6 +167,12 @@ const attrKeys = [
   "Używanie broni",
   "Umiejętności obronne"
 ];
+const displayNames = {
+  "Używanie broni": "UB",
+  "Umiejętności obronne": "UO",
+  "Wygranych turniejów": "Turnieje"
+};
+
 
 const statKeys = {
   "Poziom:": "Poziom",
@@ -118,6 +184,38 @@ const statKeys = {
   "Porażki:": "Porażki"
 };
 
+// ===== ALIASY (old -> new) =====
+function loadAliases() {
+  return JSON.parse(localStorage.getItem("bkAliases") || "{}");
+}
+function saveAliases(aliases) {
+  localStorage.setItem("bkAliases", JSON.stringify(aliases));
+}
+
+/**
+ * Zwraca "klucz kanoniczny" do porównań/checkpointu.
+ * Jeśli GUARDIAN jest aliasem Tar-Aldarion, to dla "GUARDIAN" zwróci "Tar-Aldarion".
+ * Obsługuje łańcuchy old1->old2->new.
+ */
+function getCanonicalNick(nick) {
+  const aliases = loadAliases();
+  let current = nick;
+  let moved = true;
+  // idziemy wstecz po mapie (szukamy old, dla którego aliases[old] === current)
+  while (moved) {
+    moved = false;
+    for (const [oldName, newName] of Object.entries(aliases)) {
+      if (newName === current && oldName !== current) {
+        current = oldName;
+        moved = true;
+        break;
+      }
+    }
+  }
+  return current;
+}
+// ===============================
+
 function parseSingleProfile(html) {
   let nick = "Nieznany";
   const nickMatch = html.match(/<div>\s*.*?<br\s*\/>\s*([^<]+)\s*<\/div>/i);
@@ -125,7 +223,11 @@ function parseSingleProfile(html) {
     nick = nickMatch[1].trim();
   }
 
-  // 🆕 wyciąganie zakonu
+  // UWAGA: nie podmieniamy tu nicku na alias!
+  // Zostawiamy nick taki, jak w HTML (np. nowy), a alias
+  // wykorzystamy przy liczeniu diffów i kluczy checkpointu.
+
+  // zakon
   let zakon = "";
   const zakonMatch = html.match(/<th[^>]*>\s*Zakon\s*<\/th>\s*<td[^>]*>\s*<a[^>]*>([^<]+)<\/a>/i);
   if (zakonMatch) {
@@ -148,7 +250,7 @@ function parseSingleProfile(html) {
       .replace(/\\\\/g, "\\")
       .replace(/\\"/g, '"')
       .replace(/\\'/g, "'");
-    if (/kopia/i.test(tip) || /Żądło/i.test(tip) || /lanca/i.test(tip) || /rozpłatacz tarcz/i.test(tip)) continue;
+    if (/kopia/i.test(tip) || /Żądło/i.test(tip) || /lanca/i.test(tip) || /rozpłatacz tarcz/i.test(tip) || /Wiatrołamacz/i.test(tip)) continue;
     for (let attr of attrKeys) {
       const regAttr = new RegExp(`<th[^>]*>\\s*${attr}\\s*<\\/th>\\s*<td[^>]*>\\s*(\\d+)`, "i");
       const m = tip.match(regAttr);
@@ -235,42 +337,140 @@ function extractMultiple() {
 
   const baseHeaders = attrKeys.map(a => a);
   const statsHeaders = Object.values(statKeys);
-  const allHeaders = [...baseHeaders, ...statsHeaders];
 
-  let html = `<table id="dataTable"><thead><tr><th>Nick</th><th>Zakon</th>`;
-  for (const header of allHeaders) {
-    html += `<th>${header}</th><th>&#8645;</th>`; // ⇅
+  // statystyki z pojedynczą kolumną (tylko Δ)
+  const diffOnlyStats = ["Łup stracony", "Zwycięstwa", "Remisy", "Porażki"];
+
+  // --- Nagłówki tabeli ---
+  let html = `<table id="dataTable"><thead><tr><th>#</th><th>Nick</th><th>Zakon</th>`;
+  // atrybuty bazowe: wartość + diff
+  for (const header of baseHeaders) {
+    const disp = displayNames[header] || header;
+    html += `<th>${disp}</th><th>&#8645;</th>`;
+  }
+  // statystyki: część tylko Δ, reszta wartość + Δ
+  for (const stat of statsHeaders) {
+    const disp = displayNames[stat] || stat;
+    if (diffOnlyStats.includes(stat)) {
+      html += `<th>${disp} (Δ)</th>`;
+    } else {
+      html += `<th>${disp}</th><th>&#8645;</th>`;
+    }
   }
   html += `</tr></thead><tbody>`;
 
+  // --- Wiersze ---
+  let rowIndex = 1;
   for (const player of allResults) {
-    html += `<tr><td>${player.nick}</td><td>${player.zakon}</td>`;
+    const canonical = getCanonicalNick(player.nick);
+    html += `<tr><td>${rowIndex++}</td><td>${player.nick}</td><td>${player.zakon}</td>`;
+
+    // atrybuty bazowe
     for (const attr of baseHeaders) {
       const val = player.base[attr] ?? 0;
-      const diff = checkpointBase[player.nick]?.[attr] !== undefined ? val - checkpointBase[player.nick][attr] : null;
+      const basePrev = checkpointBase[canonical]?.[attr];
+      const diff = basePrev !== undefined ? val - basePrev : null;
       html += `<td>${val}</td><td>${formatDiff(diff, attr)}</td>`;
     }
+
+    // statystyki
     for (const stat of statsHeaders) {
       const val = player.stats[stat] ?? 0;
-      const diff = checkpointStats[player.nick]?.[stat] !== undefined ? val - checkpointStats[player.nick][stat] : null;
-      html += `<td>${val}</td><td>${formatDiff(diff, stat)}</td>`;
+      const statPrev = checkpointStats[canonical]?.[stat];
+      const rawDiff = statPrev !== undefined ? val - statPrev : null;
+
+      if (diffOnlyStats.includes(stat)) {
+        // ważne: przy braku checkpointu pokaż "0", a nie pustą komórkę
+        const diff = (rawDiff === null) ? 0 : rawDiff;
+        html += `<td>${formatDiff(diff, stat)}</td>`;
+      } else {
+        html += `<td>${val}</td><td>${formatDiff(rawDiff, stat)}</td>`;
+      }
     }
+
     html += "</tr>";
   }
   html += "</tbody></table>";
 
   document.getElementById("result").innerHTML = html;
 
+  // zapis danych do ewentualnego checkpointu
   window.currentData = { base: {}, stats: {} };
   for (const p of allResults) {
-    window.currentData.base[p.nick] = p.base;
-    window.currentData.stats[p.nick] = p.stats;
+    const canonical = getCanonicalNick(p.nick);
+    window.currentData.base[canonical] = p.base;
+    window.currentData.stats[canonical] = p.stats;
   }
 
   document.getElementById("extractBtn").textContent = "Porównaj";
   addTableSorting();
-
   addRowHighlighting();
+
+  const { missing, extra } = detectUnmatchedPlayers(allResults, checkpoint);
+  showAliasManager(missing, extra);
+}
+
+
+
+function detectUnmatchedPlayers(newPlayers, checkpoint) {
+  const checkpointNicks = Object.keys(checkpoint.base || {});
+
+  // kanoniczne klucze nowych danych
+  const canonicalNewKeys = newPlayers.map(p => getCanonicalNick(p.nick));
+  const missing = checkpointNicks.filter(n => !canonicalNewKeys.includes(n));
+
+  // „extra” = te nowe nicki, które nie mają kanonicznego klucza w checkpoint
+  const extra = newPlayers
+    .filter(p => !checkpointNicks.includes(getCanonicalNick(p.nick)))
+    .map(p => p.nick);
+
+  // deduplikacja extra
+  const extraUnique = [...new Set(extra)];
+  return { missing, extra: extraUnique };
+}
+
+function showAliasManager(missing, extra) {
+  const box = document.getElementById("aliasManager");
+
+  if (!missing.length && !extra.length) {
+    box.innerHTML = `<h3>Brak rozjechanych nicków</h3>`;
+    return;
+  }
+  if (!missing.length || !extra.length) {
+    box.innerHTML = `<h3>Dopasuj zmienione nicki:</h3><div>Brakuje par do dopasowania.</div>`;
+    return;
+  }
+
+  let html = `<h3>Dopasuj zmienione nicki</h3>`;
+  html += `<table><tr><th>Stary nick (z checkpointu)</th><th>Nowy nick (z obecnych danych)</th></tr>`;
+  for (let oldNick of missing) {
+    html += `<tr>
+      <td>${oldNick}</td>
+      <td>
+        <select data-old="${oldNick}" onchange="saveSingleAlias(this)">
+          <option value="">-- wybierz --</option>`;
+    for (let newNick of extra) {
+      html += `<option value="${newNick}">${newNick}</option>`;
+    }
+    html += `</select>
+      </td>
+    </tr>`;
+  }
+  html += `</table>`;
+
+  box.innerHTML = html;
+}
+
+// zapis pojedynczej pary i NATYCHMIASTOWE odświeżenie tabeli
+function saveSingleAlias(sel) {
+  const oldNick = sel.dataset.old;
+  const newNick = sel.value;
+  if (!newNick) return;
+  const aliases = loadAliases();
+  aliases[oldNick] = newNick;
+  saveAliases(aliases);
+  // Po zapisaniu aliasu natychmiast przelicz i odśwież
+  extractMultiple();
 }
 
 function addRowHighlighting() {
@@ -278,13 +478,11 @@ function addRowHighlighting() {
   if (!table) return;
   const rows = table.querySelectorAll("tbody tr");
   rows.forEach(row => {
-    const nickCell = row.cells[0];
+    const nickCell = row.cells[1];
     if (!nickCell) return;
     nickCell.style.cursor = "pointer";
     nickCell.addEventListener("click", () => {
-      // usuń podświetlenie ze wszystkich wierszy
       rows.forEach(r => r.classList.remove("highlighted"));
-      // dodaj podświetlenie tylko do klikniętego wiersza
       row.classList.add("highlighted");
     });
   });
@@ -302,9 +500,11 @@ function saveCheckpoint() {
 
 function resetCheckpoint() {
   localStorage.removeItem("bkCheckpoint");
+  localStorage.removeItem("bkAliases");
   document.getElementById("inputHTML").value = "";
   document.getElementById("result").innerHTML = "";
-  alert("Checkpoint zresetowany!");
+  document.getElementById("aliasManager").innerHTML = "";
+  alert("Checkpoint i aliasy zresetowane!");
   document.getElementById("extractBtn").textContent = "Wyciągnij dane";
 }
 
@@ -312,11 +512,24 @@ function addTableSorting() {
   const table = document.getElementById("dataTable");
   const headers = table.querySelectorAll("th");
   headers.forEach((header, index) => {
+    // pomijamy kolumnę numeracji (#)
+    if (index === 0) return;
     header.addEventListener("click", () => {
       sortTableByColumn(table, index);
+      updateRowNumbers(table);
     });
   });
 }
+
+// Funkcja do ponownego numerowania pierwszej kolumny
+function updateRowNumbers(table) {
+  const rows = table.tBodies[0].querySelectorAll("tr");
+  let num = 1;
+  rows.forEach(row => {
+    row.cells[0].textContent = num++;
+  });
+}
+
 
 function sortTableByColumn(table, columnIndex) {
   const tbody = table.tBodies[0];
@@ -340,6 +553,8 @@ function sortTableByColumn(table, columnIndex) {
   rows.forEach(row => tbody.appendChild(row));
   table.dataset.sortColumn = columnIndex;
   table.dataset.sortOrder = newSortOrder;
+
+  addRowHighlighting();
 }
 
 document.addEventListener("dragover", e => {
@@ -358,6 +573,51 @@ document.addEventListener("drop", e => {
     reader.readAsText(file);
   }
 });
+function exportTableToCSV(filename) {
+    const table = document.getElementById("dataTable");
+    if (!table) {
+        alert("Najpierw wygeneruj tabelę, aby ją wyeksportować.");
+        return;
+    }
+    const csv = [];
+    const headers = table.querySelectorAll("thead th");
+    const headerRow = [];
+    for (let i = 0; i < headers.length; i++) {
+        let text = headers[i].innerText.trim();
+        // Sprawdź, czy tekst zawiera znak strzałki (może być różnie interpretowany)
+        if (text.includes('↔') || text.includes('↕')) { 
+            const prevHeaderText = headers[i - 1].innerText.trim();
+            headerRow.push(`${prevHeaderText} (Zmiana)`);
+        } else {
+            headerRow.push(text);
+        }
+    }
+    csv.push(headerRow.join(';'));
+    const rows = table.querySelectorAll("tbody tr");
+    rows.forEach(row => {
+        const rowData = [];
+        row.querySelectorAll("td").forEach(cell => {
+            let cellText = cell.innerText.trim();
+            if (cellText.includes(';') || cellText.includes('"')) {
+                cellText = '"' + cellText.replace(/"/g, '""') + '"';
+            }
+            rowData.push(cellText);
+        });
+        csv.push(rowData.join(';'));
+    });
+    const csvContent = csv.join('\n');
+    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    if (link.download !== undefined) {
+        const url = URL.createObjectURL(blob);
+        link.setAttribute("href", url);
+        link.setAttribute("download", filename);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+}
 </script>
 
 </body>
