@@ -250,7 +250,7 @@ function parseSingleProfile(html) {
       .replace(/\\\\/g, "\\")
       .replace(/\\"/g, '"')
       .replace(/\\'/g, "'");
-    if (/kopia/i.test(tip) || /Żądło/i.test(tip) || /lanca/i.test(tip) || /Stalowy szpic/i.test(tip) || /rozpłatacz tarcz/i.test(tip) || /Wiatrołamacz/i.test(tip)) continue;
+    if (/kopia/i.test(tip) || /kopa/i.test(tip) || /Żądło/i.test(tip) || /lanca/i.test(tip) || /Stalowy szpic/i.test(tip) || /rozpłatacz tarcz/i.test(tip) || /Wiatrołamacz/i.test(tip)) continue;
     for (let attr of attrKeys) {
       const regAttr = new RegExp(`<th[^>]*>\\s*${attr}\\s*<\\/th>\\s*<td[^>]*>\\s*(\\d+)`, "i");
       const m = tip.match(regAttr);
@@ -622,4 +622,5 @@ function exportTableToCSV(filename) {
 
 </body>
 </html>
+
 
