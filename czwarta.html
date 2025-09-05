@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BK Kalkulator Kosztów statów</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #111;
+      color: #4285f4;
+      display: flex;
+      justify-content: center;
+      padding: 20px;
+    }
+    .container {
+      max-width: 600px;
+      width: 100%;
+      background: #222;
+      padding: 20px;
+      border-radius: 10px;
+    }
+    h2 {
+      text-align: center;
+      color: #fff;
+    }
+    label {
+      display: block;
+      margin-top: 10px;
+    }
+    input, select {
+      width: 100%;
+      padding: 8px;
+      margin-top: 5px;
+      border-radius: 5px;
+      border: none;
+      background: #333;
+      color: #4285f4;
+      font-weight: bold;
+      font-size: 1rem;
+    }
+    table {
+      width: 100%;
+      margin-top: 20px;
+      border-collapse: collapse;
+    }
+    th, td {
+      padding: 8px;
+      text-align: center;
+      border-bottom: 1px solid #555;
+    }
+    th {
+      color: #fff;
+    }
+    .checkbox-group {
+      margin-top: 10px;
+    }
+    .checkbox-group label {
+      display: inline-block;
+      margin-right: 10px;
+      font-weight: normal;
+      color: #4285f4;
+      cursor: pointer;
+    }
+    .sum-row td {
+      font-weight: bold;
+      color: #fff;
+      font-size: 1.1rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>BK Kalkulator Kosztów Statów</h2>
+
+    <label>Zniżka indywidualna:</label>
+    <select id="indywidualna">
+      <option value="0">Brak (0%)</option>
+      <option value="0.25" selected>-25%</option>
+    </select>
+
+    <label>Zniżka zakonna:</label>
+    <select id="zakon">
+      <option value="0">Brak</option>
+      <option value="0.14">-14%</option>
+      <option value="0.18">-18%</option>
+      <option value="0.22">-22%</option>
+      <option value="0.26" selected>-26%</option>
+    </select>
+
+    <label>Poziom wróżki:</label>
+    <select id="wrozka">
+      <option value="0">Brak</option>
+      <option value="0.01">-1%</option>
+      <option value="0.02">-2%</option>
+      <option value="0.03" selected>-3%</option>
+    </select>
+
+    <label>Dodatkowe zniżki:</label>
+    <div class="checkbox-group">
+      <label><input type="checkbox" id="event"> Event -50%</label>
+      <label><input type="checkbox" id="uzdrowiciel"> Uzdrowiciel (pełna zniżka)</label>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Atrybut</th>
+          <th>Obecny poziom</th>
+          <th>Ile podniesiono</th>
+          <th>Koszt podniesienia</th>
+        </tr>
+      </thead>
+      <tbody id="tabela">
+        <tr>
+          <td>Siła</td>
+          <td><input type="number" class="stat" data-id="sila" value="0" min="0"></td>
+          <td class="wynik" contenteditable="true">0</td>
+          <td class="koszt">0</td>
+        </tr>
+        <tr>
+          <td>Zręczność</td>
+          <td><input type="number" class="stat" data-id="zrecznosc" value="0" min="0"></td>
+          <td class="wynik" contenteditable="true">0</td>
+          <td class="koszt">0</td>
+        </tr>
+        <tr>
+          <td>Kondycja</td>
+          <td><input type="number" class="stat" data-id="kondycja" value="0" min="0"></td>
+          <td class="wynik" contenteditable="true">0</td>
+          <td class="koszt">0</td>
+        </tr>
+        <tr>
+          <td>Szczęście</td>
+          <td><input type="number" class="stat" data-id="szczescie" value="0" min="0"></td>
+          <td class="wynik" contenteditable="true">0</td>
+          <td class="koszt">0</td>
+        </tr>
+        <tr>
+          <td>Używanie broni</td>
+          <td><input type="number" class="stat" data-id="bron" value="0" min="0"></td>
+          <td class="wynik" contenteditable="true">0</td>
+          <td class="koszt">0</td>
+        </tr>
+        <tr>
+          <td>Umiejętności obronne</td>
+          <td><input type="number" class="stat" data-id="obrona" value="0" min="0"></td>
+          <td class="wynik" contenteditable="true">0</td>
+          <td class="koszt">0</td>
+        </tr>
+        <tr class="sum-row">
+          <td colspan="3">Suma kosztów:</td>
+          <td id="suma">0</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    // bezpieczne parsowanie liczb z inputów / contenteditable
+    function parseIntSafe(v) {
+      if (v === null || v === undefined) return 0;
+      const s = (typeof v === 'string') ? v.replace(/[^\d-]/g, '') : String(v);
+      const n = parseInt(s, 10);
+      return isNaN(n) ? 0 : n;
+    }
+
+    function calculate() {
+      const indywidualna = parseFloat(document.getElementById('indywidualna').value) || 0;
+      const zakon = parseFloat(document.getElementById('zakon').value) || 0;
+      const wrozka = parseFloat(document.getElementById('wrozka').value) || 0;
+      const event = document.getElementById('event').checked;
+      const uzdrowiciel = document.getElementById('uzdrowiciel').checked;
+
+      // koszt wynikający z zniżek (stosowany, gdy NIE używamy kalibracji)
+      let kosztCalkowity = 1;
+      const znizkaBazowa = indywidualna + zakon;
+      kosztCalkowity *= (1 - znizkaBazowa);
+      kosztCalkowity *= (1 - wrozka);
+      if (uzdrowiciel) kosztCalkowity = 0.147438878217168;
+      if (event) kosztCalkowity *= 0.5;
+
+      let sumaWszystkich = 0;
+
+      // dla każdego wiersza: liczymy SUMĘ kosztów JUTRZEJSZYCH PODBIĆ już wykonanych:
+      // czyli sumujemy k^2 * kosztCalkowity dla k = (poziom - ile) ... (poziom - 1)
+      document.querySelectorAll("#tabela tr").forEach(row => {
+        const statInput = row.querySelector("input.stat");
+        const ileInput = row.querySelector(".wynik");
+        const kosztCell = row.querySelector(".koszt");
+
+        if (!statInput || !ileInput || !kosztCell) return;
+
+        const poziom = parseIntSafe(statInput.value);
+        const ilePodnies = Math.max(0, parseIntSafe(ileInput.textContent));
+
+        if (ilePodnies <= 0 || poziom <= 0) {
+          kosztCell.textContent = "0";
+          return;
+        }
+
+        const start = Math.max(0, poziom - ilePodnies);
+        let sumaKosztow = 0;
+        for (let k = start; k < poziom; k++) {
+          const koszt = Math.round(k * k * kosztCalkowity);
+          sumaKosztow += koszt;
+        }
+
+        kosztCell.textContent = sumaKosztow.toLocaleString();
+        sumaWszystkich += sumaKosztow;
+      });
+
+      document.getElementById("suma").textContent = sumaWszystkich.toLocaleString();
+    }
+
+    // obserwujemy zmiany
+    document.querySelectorAll("input.stat").forEach(input => {
+      input.addEventListener("input", calculate);
+    });
+    document.querySelectorAll(".wynik").forEach(cell => {
+      cell.addEventListener("input", calculate);
+    });
+    document.querySelectorAll("select, input[type=checkbox]").forEach(el => {
+      el.addEventListener("change", calculate);
+    });
+
+    // start
+    calculate();
+  </script>
+</body>
+</html>
