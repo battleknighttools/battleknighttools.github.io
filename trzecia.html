@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
   <meta charset="UTF-8" />
-  <title>Wyciągacz Bazowych Atrybutów BK + Statystyki (wiele profili) + Sortowanie</title>
+  <title>BK Pegasus PRO</title>
   <style>
     body {
       background-color: #121212;
@@ -25,7 +25,7 @@
     }
     button {
       padding: 10px 15px;
-      background-color: #ffa500;
+      background-color: #fbbc04;
       border: none;
       color: #121212;
       cursor: pointer;
@@ -34,52 +34,92 @@
       font-weight: bold;
       transition: background-color 0.3s ease;
     }
-    button:hover {
-      background-color: #e59400;
+    button:hover { background-color: #d9a403; }
+    #resetBtn { background-color: #e53935; color: #fff; }
+    #resetBtn:hover { background-color: #c62828; }
+/* NOWY STYL DLA MODALU PODSUMOWANIA GRACZA */
+    #playerSummaryModal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.7);
+        display: none; /* Domyślnie ukryty */
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
     }
-    #resetBtn {
-      background-color: #ff4444;
-      color: #fff;
+    #playerSummaryContent {
+        background-color: #1e1e1e;
+        padding: 20px 30px;
+        border-radius: 8px;
+        width: 80%;
+        max-width: 600px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+        max-height: 90vh;
+        overflow-y: auto;
+        color: #f0f0f0;
     }
-    #resetBtn:hover {
-      background-color: #cc3333;
+    #playerSummaryContent h2 {
+        color: #fbbc04;
+        margin-top: 0;
+        border-bottom: 2px solid #333;
+        padding-bottom: 10px;
+        margin-bottom: 15px;
     }
-	#exportBtn {
-  background-color: #008CBA;
-  color: white;
+    #playerSummaryContent h3 {
+        color: #ffd28a;
+        margin: 15px 0 8px 0;
+    }
+    .summary-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px 20px;
+    }
+    .summary-grid-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 5px 0;
+        border-bottom: 1px dotted #333;
+    }
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+  background: transparent;   /* tabela niewidoczna */
+  white-space: nowrap;
 }
-#exportBtn:hover {
-    background-color: #007B9A;
-}
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 20px;
-      white-space: nowrap;
-    }
-    th, td {
-      border: 1px solid #333;
-      padding: 8px;
-      text-align: center;
-    }
-    th {
-      background-color: #ffa500;
-      color: #121212;
-      position: sticky;
-      top: 0;
-      z-index: 2;
-      cursor: pointer;
-    }
-    tbody tr:nth-child(odd) { background-color: #000000; }
-    tbody tr:nth-child(even) { background-color: #1a1a1a; }
 
-    .green { color: #00ff00; }
-    .red { color: #ff4444; }
-    .diff-zero { color: #00bfff; }
-    .highlighted {
-      color: #ffb347 !important;
-      font-weight: bold;
-    }
+th, td {
+  border: none;              /* brak linii między kolumnami */
+  padding: 8px;
+  text-align: center;
+  color: #ddd;
+}
+
+th {
+  background-color: #fbbc04;
+  color: #222;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  cursor: pointer;
+}
+
+/* naprzemienne wiersze */
+tbody tr:nth-child(odd)  { background-color: #000; }       /* czarny */
+tbody tr:nth-child(even) { background-color: #121212; }    /* dokładnie tło strony */
+
+
+    /* Kolory różnic */
+    .diff-pos { color: #32ff32; }   /* zielony */
+    .diff-neg { color: #f44336; }   /* czerwony */
+    .zero-diff { color: #2196f3; }  /* niebieski */
+    .draws-diff { color: #00d5ff; } /* błękitny remis */
+
+    /* Podświetlenie zaznaczonego wiersza */
+    .highlighted { color: #ffb347 !important; font-weight: bold; }
 
     /* Prawy panel aliasów */
     #aliasManager {
@@ -87,60 +127,45 @@
       border: 1px solid #333;
       border-radius: 6px;
       padding: 10px;
-      height: 200px;          /* dopasowane do textarea */
+      height: 200px;
       overflow-y: auto;
     }
-    #aliasManager h3 {
-      margin: 0 0 8px 0;
-      font-size: 14px;
-      color: #ffd28a;
-    }
-#aliasManager table {
-  width: 100%;
-  margin-top: 10px;
-  border-collapse: collapse;
-}
+    #aliasManager h3 { margin: 0 0 8px 0; font-size: 14px; color: #ffd28a; }
+    #aliasManager table { width: 100%; margin-top: 10px; border-collapse: collapse; }
+    #aliasManager th, #aliasManager td { border: 1px solid #333; padding: 6px; text-align: center; }
+    #aliasManager th { background-color: #fbbc04; color: #121212; font-weight: bold; }
+    #aliasManager tbody tr:nth-child(odd) { background-color: #000; color: #fff; }
+    #aliasManager tbody tr:nth-child(even) { background-color: #1a1a1a; color: #fff; }
 
-#aliasManager th, #aliasManager td {
-  border: 1px solid #333;
-  padding: 6px;
-  text-align: center;
+#dataTable td {
+  transition: background-color 0.3s ease;
 }
-
-/* Nagłówek tabeli aliasów */
-#aliasManager th {
-  background-color: #ffa500; /* pomarańczowy jak reszta nagłówków */
-  color: #121212;             /* czarny tekst */
-  font-weight: bold;
-}
-
-/* Kolory naprzemienne wierszy */
-#aliasManager tbody tr:nth-child(odd) {
-  background-color: #000;      /* czarny */
-  color: #fff;                 /* biały tekst */
-}
-#aliasManager tbody tr:nth-child(even) {
-  background-color: #1a1a1a;   /* bardzo ciemnoszary */
-  color: #fff;                 /* biały tekst */
-}
-
 
     /* Kontener 80/20 */
-    .topbar {
-      display: flex;
-      gap: 10px;
-      align-items: stretch;
-      margin-bottom: 10px;
-    }
+    .topbar { display: flex; gap: 10px; align-items: stretch; margin-bottom: 10px; }
     .topbar .left { flex: 4; }
     .topbar .right { flex: 1; }
+    
+    /* Nowy styl dla selecta checkpoint */
+    #globalCheckpointSelect {
+        padding: 8px 12px;
+        margin-left: 5px;
+        background-color: #1e1e1e;
+        color: #f0f0f0;
+        border: 1px solid #333;
+        border-radius: 6px;
+        cursor: pointer;
+    }
+    #globalCheckpointSelect option {
+        background-color: #1e1e1e;
+        color: #f0f0f0;
+    }
   </style>
 </head>
 <body>
 
-<h1>Wyciągacz Bazowych Atrybutów BK + Statystyki (wiele profili)</h1>
+<h1>BK Pegasus - Ultimate v12.2025</h1>
 
-<!-- 80% / 20% -->
 <div class="topbar">
   <div class="left">
     <textarea id="inputHTML" placeholder="Wklej tutaj wiele profili HTML..."></textarea>
@@ -152,11 +177,29 @@
 
 <button id="extractBtn" onclick="extractMultipleAndClear()">Wyciągnij dane</button>
 <button onclick="saveCheckpointAndClear()">Zapisz checkpoint</button>
-<!-- WSTAW TEN PRZYCISK -->
-<button id="exportBtn" onclick="exportTableToCSV('dane_bk.csv')">Eksportuj do CSV</button>
 <button id="resetBtn" onclick="resetCheckpoint()">RESET</button>
+<button id="toggleAttrBtn" onclick="toggleAttributes()">Ukryj atrybuty</button>
+<button id="toggleTournamentsBtn" onclick="toggleTournaments()">Ukryj turnieje</button>
+<button id="toggleStatsBtn" onclick="toggleStatsColumns()">Ukryj poziom, łupy i walki</button>
+<button style="background-color:#2196f3;color:#fff;" onclick="copyChangedRows()">Kopiuj</button>
+<button id="toggleExtraBtn" style="background-color:#4caf50; color:#fff;" onclick="toggleExtraColumns()">Więcej danych</button>
+<button id="showSummaryBtn" style="background-color:#9c27b0; color:#fff;" onclick="showGuildSummary()">Podsumowanie Zakonów</button>
+<button id="saveGlobalCheckpointBtn" style="background-color:#ff9800; color:#fff;" onclick="promptAndSaveGlobalCheckpoint()">Trwały Checkpoint</button>
+<select id="globalCheckpointSelect" onchange="loadGlobalCheckpoint(this.value)">
+    <option value="">Wybierz Globalny...</option>
+</select>
+<button id="deleteGlobalCheckpointBtn" style="background-color:#ea4335; color:#fff;" onclick="deleteSelectedGlobalCheckpoint()">Usuń Checkpoint</button>
+
 
 <div id="result"></div>
+
+<div id="playerSummaryModal" onclick="this.style.display='none'">
+    <div id="playerSummaryContent" onclick="event.stopPropagation()">
+        <button style="float:right; background-color:#e53935; color:#fff;" onclick="document.getElementById('playerSummaryModal').style.display='none'">Zamknij</button>
+        <h2>Szczegółowe Podsumowanie Gracza</h2>
+        <div id="summaryDetails"></div>
+    </div>
+</div>
 
 <script>
 const attrKeys = [
@@ -173,7 +216,6 @@ const displayNames = {
   "Wygranych turniejów": "Turnieje"
 };
 
-
 const statKeys = {
   "Poziom:": "Poziom",
   "Łup \\(zdobyty\\):": "Łup zdobyty",
@@ -184,24 +226,181 @@ const statKeys = {
   "Porażki:": "Porażki"
 };
 
-// ===== ALIASY (old -> new) =====
-function loadAliases() {
-  return JSON.parse(localStorage.getItem("bkAliases") || "{}");
-}
-function saveAliases(aliases) {
-  localStorage.setItem("bkAliases", JSON.stringify(aliases));
+// ==========================================================
+// 🔥 OPYMALIZACJA: PREKOMPILOWANE WYRAŻENIA REGULARNE (START)
+// ==========================================================
+const REGEX_NICK = /<div>\s*.*?<br\s*\/?>\s*([^<]+)\s*<\/div>/i;
+const REGEX_ZAKON = /<th[^>]*>\s*Zakon\s*<\/th>\s*<td[^>]*>\s*<a[^>]*>([^<]+)<\/a>/i;
+const REGEX_MODIFY_LUCK = /"ModifyLuck"\s*:\s*(\d+)/i;
+const REGEX_ITEM_TIPS = /item\.store\('tip:text',\s*'(.*?)'\);/gs;
+
+const REGEX_BASE_ATTRS = {};
+for (const attr of attrKeys) {
+    // Regex dla atrybutu bazowego: <th[^>]*>\s*Siła\s*<\/th>\s*<td[^>]*>(\d+)
+    REGEX_BASE_ATTRS[attr] = new RegExp(`<th[^>]*>\\s*${attr}\\s*<\\/th>\\s*<td[^>]*>\\s*(\\d+)`, "i");
 }
 
-/**
- * Zwraca "klucz kanoniczny" do porównań/checkpointu.
- * Jeśli GUARDIAN jest aliasem Tar-Aldarion, to dla "GUARDIAN" zwróci "Tar-Aldarion".
- * Obsługuje łańcuchy old1->old2->new.
- */
+const REGEX_STATS = {};
+for (const key in statKeys) {
+    // Regex dla statystyki: <th[^>]*>\s*Poziom:\s*<\/th>\s*<td[^>]*>([\d\.]+)
+    REGEX_STATS[key] = new RegExp(`<th[^>]*>\\s*${key}\\s*<\\/th>\\s*<td[^>]*>\\s*([\\d\.]+)`, "i");
+}
+// ==========================================================
+// 🔥 OPYMALIZACJA: PREKOMPILOWANE WYRAŻENIA REGULARNE (KONIEC)
+// ==========================================================
+
+
+// Globalna flaga stanu widoczności podsumowania
+let guildSummaryVisible = false;
+
+// ===== CHECKPOINT I PAMIĘĆ GLOBALNA (NOWE/ZMODYFIKOWANE) =====
+
+const LOCAL_CHECKPOINT_KEY = "bkCheckpoint";
+const GLOBAL_CHECKPOINTS_KEY = "bkGlobalCheckpoints";
+const CURRENT_ACTIVE_CHECKPOINT_KEY = "bkActiveCheckpointKey";
+
+// Inicjalizacja selecta przy ładowaniu strony
+document.addEventListener('DOMContentLoaded', (event) => {
+    initGlobalCheckpoints();
+});
+
+// Pobiera aktywny (lokalny lub globalny) checkpoint
+function getActiveCheckpointKey() {
+    return localStorage.getItem(CURRENT_ACTIVE_CHECKPOINT_KEY) || LOCAL_CHECKPOINT_KEY;
+}
+
+// Ładuje checkpoint z wybranego klucza (lokalnego lub globalnego)
+function loadCheckpointData(key) {
+    if (key === LOCAL_CHECKPOINT_KEY) {
+        return JSON.parse(localStorage.getItem(LOCAL_CHECKPOINT_KEY) || "{}");
+    } else {
+        const globals = JSON.parse(localStorage.getItem(GLOBAL_CHECKPOINTS_KEY) || "{}");
+        return globals[key] || {};
+    }
+}
+
+// Inicjalizacja selecta globalnych checkpointów
+function initGlobalCheckpoints() {
+    const select = document.getElementById('globalCheckpointSelect');
+    const globals = JSON.parse(localStorage.getItem(GLOBAL_CHECKPOINTS_KEY) || "{}");
+    const activeKey = getActiveCheckpointKey();
+
+    // Wyczyść stare opcje (oprócz pierwszej)
+    while (select.options.length > 1) { select.remove(1); }
+
+    // Dodaj opcje z pamięci globalnej
+    for (const key in globals) {
+        const option = document.createElement('option');
+        option.value = key;
+        option.text = key;
+        select.add(option);
+    }
+    
+    // Ustawienie aktywnej opcji
+    select.value = activeKey === LOCAL_CHECKPOINT_KEY ? "" : activeKey;
+}
+
+// Funkcja przełączania na globalny checkpoint
+function loadGlobalCheckpoint(key) {
+    if (!key) {
+        // Przełączenie z powrotem na lokalny checkpoint
+        localStorage.setItem(CURRENT_ACTIVE_CHECKPOINT_KEY, LOCAL_CHECKPOINT_KEY);
+        alert("Przełączono na lokalny checkpoint.");
+    } else {
+        localStorage.setItem(CURRENT_ACTIVE_CHECKPOINT_KEY, key);
+        alert(`Aktywny checkpoint: ${key}`);
+    }
+    
+    // Próba ponownego wyodrębnienia danych z pola tekstowego, jeśli nie jest puste
+    if (document.getElementById("inputHTML").value.trim()) {
+        extractMultiple();
+    }
+}
+
+
+// Zapisuje obecny stan do nowej, trwałej nazwy
+function promptAndSaveGlobalCheckpoint() {
+    if (!window.currentData) { alert("Brak danych do zapisu. Najpierw wyciągnij dane."); return; }
+    
+    let checkpointName = prompt("Podaj nazwę dla trwałego checkpointa (np. 'Start Sezonu'):");
+    
+    if (!checkpointName || !checkpointName.trim()) {
+        alert("Anulowano zapis.");
+        return;
+    }
+
+    checkpointName = checkpointName.trim();
+    const globals = JSON.parse(localStorage.getItem(GLOBAL_CHECKPOINTS_KEY) || "{}");
+
+    // Zapisz obecny stan do globalnej pamięci pod nową nazwą
+    globals[checkpointName] = window.currentData;
+    localStorage.setItem(GLOBAL_CHECKPOINTS_KEY, JSON.stringify(globals));
+
+    // Ustawienie go jako aktywnego
+    localStorage.setItem(CURRENT_ACTIVE_CHECKPOINT_KEY, checkpointName);
+    
+    // Odświeżenie listy rozwijanej
+    initGlobalCheckpoints();
+    document.getElementById('globalCheckpointSelect').value = checkpointName;
+
+    alert(`Trwały checkpoint '${checkpointName}' zapisany i ustawiony jako aktywny.`);
+    document.getElementById("extractBtn").textContent = "Porównaj";
+    
+    // NOWA ZMIANA: Wyczyszczenie pola tekstowego
+    document.getElementById("inputHTML").value = "";
+}
+
+
+// NOWA FUNKCJA: Usuwanie wybranego globalnego checkpointa
+function deleteSelectedGlobalCheckpoint() {
+    const select = document.getElementById('globalCheckpointSelect');
+    const keyToDelete = select.value;
+
+    if (!keyToDelete || keyToDelete === LOCAL_CHECKPOINT_KEY) {
+        alert("Wybierz trwały checkpoint z listy, który chcesz usunąć.");
+        return;
+    }
+
+    if (!confirm(`Czy na pewno chcesz usunąć trwały checkpoint: '${keyToDelete}'? Tego nie da się cofnąć!`)) {
+        return;
+    }
+
+    const globals = JSON.parse(localStorage.getItem(GLOBAL_CHECKPOINTS_KEY) || "{}");
+    
+    if (globals[keyToDelete]) {
+        delete globals[keyToDelete];
+        localStorage.setItem(GLOBAL_CHECKPOINTS_KEY, JSON.stringify(globals));
+
+        // Sprawdzenie, czy usuwany był aktywnym
+        const activeKey = getActiveCheckpointKey();
+        if (activeKey === keyToDelete) {
+            // Przełącz na lokalny (domyślny)
+            localStorage.setItem(CURRENT_ACTIVE_CHECKPOINT_KEY, LOCAL_CHECKPOINT_KEY);
+            document.getElementById("extractBtn").textContent = "Porównaj"; // Zachowanie logiki 'Porównaj'
+        }
+        
+        // Odświeżenie listy rozwijanej
+        initGlobalCheckpoints();
+        alert(`Trwały checkpoint '${keyToDelete}' został usunięty.`);
+        
+        // Jeśli pole tekstowe nie jest puste, spróbuj odświeżyć porównanie
+        if (document.getElementById("inputHTML").value.trim()) {
+            extractMultiple();
+        }
+    } else {
+        alert(`Błąd: Checkpoint '${keyToDelete}' nie został znaleziony.`);
+    }
+}
+
+
+// ===== ALIASY (old -> new) (bez zmian) =====
+function loadAliases() { return JSON.parse(localStorage.getItem("bkAliases") || "{}"); }
+function saveAliases(aliases) { localStorage.setItem("bkAliases", JSON.stringify(aliases)); }
+
 function getCanonicalNick(nick) {
   const aliases = loadAliases();
   let current = nick;
   let moved = true;
-  // idziemy wstecz po mapie (szukamy old, dla którego aliases[old] === current)
   while (moved) {
     moved = false;
     for (const [oldName, newName] of Object.entries(aliases)) {
@@ -218,51 +417,40 @@ function getCanonicalNick(nick) {
 
 function parseSingleProfile(html) {
   let nick = "Nieznany";
-  const nickMatch = html.match(/<div>\s*.*?<br\s*\/>\s*([^<]+)\s*<\/div>/i);
-  if (nickMatch) {
-    nick = nickMatch[1].trim();
-  }
+  const nickMatch = html.match(REGEX_NICK); // Użycie stałego REGEX
+  if (nickMatch) { nick = nickMatch[1].trim(); }
 
-  // UWAGA: nie podmieniamy tu nicku na alias!
-  // Zostawiamy nick taki, jak w HTML (np. nowy), a alias
-  // wykorzystamy przy liczeniu diffów i kluczy checkpointu.
-
-  // zakon
   let zakon = "";
-  const zakonMatch = html.match(/<th[^>]*>\s*Zakon\s*<\/th>\s*<td[^>]*>\s*<a[^>]*>([^<]+)<\/a>/i);
-  if (zakonMatch) {
-    zakon = zakonMatch[1].trim();
-  }
+  const zakonMatch = html.match(REGEX_ZAKON); // Użycie stałego REGEX
+  if (zakonMatch) { zakon = zakonMatch[1].trim(); }
 
   const total = {};
   for (let attr of attrKeys) {
-    const regex = new RegExp(`<th[^>]*>\\s*${attr}\\s*<\\/th>\\s*<td[^>]*>\\s*(\\d+)`, "i");
-    const match = html.match(regex);
+    // Użycie prekompilowanego REGEX
+    const match = html.match(REGEX_BASE_ATTRS[attr]);
     total[attr] = match ? parseInt(match[1]) : 0;
   }
 
   const bonusyPkt = {};
   for (let attr of attrKeys) bonusyPkt[attr] = 0;
 
-  const itemTips = [...html.matchAll(/item\.store\('tip:text',\s*'(.*?)'\);/gs)];
+  // Użycie stałego REGEX
+  const itemTips = [...html.matchAll(REGEX_ITEM_TIPS)]; 
   for (const [, tipRaw] of itemTips) {
-    const tip = tipRaw
-      .replace(/\\\\/g, "\\")
-      .replace(/\\"/g, '"')
-      .replace(/\\'/g, "'");
-     if (/kopia/i.test(tip) || /Kopa/i.test(tip) || /Powalacz rycerzy/i.test(tip) || /Pazur gryfa/i.test(tip) || /Szokopia/i.test(tip) || /Wysiodłacz/i.test(tip) || /Stalowy szpic/i.test(tip) || /Żądło/i.test(tip) || /lanca/i.test(tip) || /rozpłatacz tarcz/i.test(tip) || /Wiatrołamacz/i.test(tip)) continue;
+    const tip = tipRaw.replace(/\\\\/g, "\\").replace(/\\\"/g, '"').replace(/\\'/g, "'");
+    if (/kopia/i.test(tip) || /Kopa/i.test(tip) || /łamacz łańcuchowy/i.test(tip) || /Powalacz rycerzy/i.test(tip) || /Pazur gryfa/i.test(tip) || /Szokopia/i.test(tip) || /Wysiodłacz/i.test(tip) || /Stalowy szpic/i.test(tip) || /Żądło/i.test(tip) || /lanca/i.test(tip) || /rozpłatacz tarcz/i.test(tip) || /Wiatrołamacz/i.test(tip)) continue;
+    
+    // 🔥 OPYMALIZACJA: Użycie prekompilowanego REGEX w pętli bonusów
     for (let attr of attrKeys) {
-      const regAttr = new RegExp(`<th[^>]*>\\s*${attr}\\s*<\\/th>\\s*<td[^>]*>\\s*(\\d+)`, "i");
-      const m = tip.match(regAttr);
+      const m = tip.match(REGEX_BASE_ATTRS[attr]); 
       if (m) bonusyPkt[attr] += parseInt(m[1]);
     }
   }
 
   let bonusProcSzczescie = 0;
-  const modifyLuckMatch = html.match(/"ModifyLuck"\s*:\s*(\d+)/i);
-  if (modifyLuckMatch) {
-    bonusProcSzczescie = parseInt(modifyLuckMatch[1]) / 100;
-  }
+  // Użycie stałego REGEX
+  const modifyLuckMatch = html.match(REGEX_MODIFY_LUCK);
+  if (modifyLuckMatch) { bonusProcSzczescie = parseInt(modifyLuckMatch[1]) / 100; }
 
   const base = {};
   const bonusProcWPkt = {};
@@ -270,6 +458,7 @@ function parseSingleProfile(html) {
 
   for (let attr of attrKeys) {
     if (attr === "Szczęście") {
+      // LOGIKA OBLICZANIA SZCZĘŚCIA POZOSTAJE BEZ ZMIAN!
       base[attr] = Math.ceil(total[attr] / (1 + bonusProcSzczescie)) - bonusyPkt[attr];
       bonusProcWPkt[attr] = Math.round((base[attr] + bonusyPkt[attr]) * bonusProcSzczescie);
       suma[attr] = base[attr] + bonusyPkt[attr] + bonusProcWPkt[attr];
@@ -282,8 +471,9 @@ function parseSingleProfile(html) {
 
   const stats = {};
   for (let key in statKeys) {
-    const regex = new RegExp(`<th[^>]*>\\s*${key}\\s*<\\/th>\\s*<td[^>]*>\\s*([\\d\\.]+)`, "i");
-    const match = html.match(regex);
+    // 🔥 OPYMALIZACJA: Użycie prekompilowanego REGEX
+    const match = html.match(REGEX_STATS[key]);
+    // POPRAWKA: Usunięcie separatorów tysięcy (kropek) przed parsowaniem na liczbę
     stats[statKeys[key]] = match ? parseInt(match[1].replace(/\./g, "")) : 0;
   }
 
@@ -292,63 +482,322 @@ function parseSingleProfile(html) {
 
 function formatDiff(diff, statName) {
   if (diff === null) return "";
-  if (diff === 0) return `<span class="diff-zero">0</span>`;
-  if (statName === "Łup stracony" || statName === "Porażki") {
-    return diff > 0 ? `<span class="red">${diff}</span>` : `<span class="green">${diff}</span>`;
+  
+  // NOWA LOGIKA DLA KONDYCJI (Δ) - Zwracamy czysty tekst, jeśli > 0, bo komórka <td> będzie stylowana
+  if (statName === "Kondycja" && diff > 0) {
+    return diff; 
   }
-  return diff > 0 ? `<span class="green">${diff}</span>` : `<span class="red">${diff}</span>`;
+  
+  // obsługa kolumny "Staty (Δ)" i "Łącznie Atrybutów (Δ)" w podsumowaniu
+  if (statName === "Staty" || statName === "Łącznie Atrybutów") {
+    if (diff === 0) return `<span class="zero-diff">0</span>`; 
+    return `<span style="color:#ff00ff;font-weight:bold;">${diff}</span>`; // Różowy/fioletowy kolor
+  }
+
+  if (diff === 0) return `<span class="zero-diff">0</span>`;
+
+  if (statName === "Łup stracony" || statName === "Porażki") {
+    return diff > 0 ? `<span class="diff-neg">${diff}</span>` : `<span class="diff-pos">${diff}</span>`;
+  }
+
+  if (statName === "Remisy") {
+    return diff > 0 ? `<span class="draws-diff">${diff}</span>` : `<span class="diff-neg">${diff}</span>`;
+  }
+  
+  // Nowa logika dla 'Wygranych turniejów'
+  if (statName === "Wygranych turniejów") {
+      return diff > 0 ? `<span class="diff-pos">${diff}</span>` : `<span class="diff-neg">${diff}</span>`;
+  }
+
+  return diff > 0 ? `<span class="diff-pos">${diff}</span>` : `<span class="diff-neg">${diff}</span>`;
 }
 
-function extractMultipleAndClear() {
-  extractMultiple();
-  document.getElementById("inputHTML").value = "";
+// === WERSJA Z POMARAŃCZOWYMI SUMAMI I BEZ ZNAKU PLUS ===
+function showPlayerSummaryPopup(nick) {
+    const canonicalNick = getCanonicalNick(nick);
+    const player = window.lastResults.find(p => getCanonicalNick(p.nick) === canonicalNick);
+    
+    if (!player) {
+        alert(`Brak danych dla gracza: ${nick}`);
+        return;
+    }
+
+    const modal = document.getElementById('playerSummaryModal');
+    const content = document.getElementById('summaryDetails');
+    const activeCheckpointKey = getActiveCheckpointKey();
+    const checkpoint = loadCheckpointData(activeCheckpointKey);
+    const prevStats = checkpoint.stats[canonicalNick] || {};
+    const prevBase = checkpoint.base[canonicalNick] || {};
+
+    // Pomocnicza funkcja: Delta bez plusa, z kolorowaniem inline
+    const getColoredDelta = (diff, type = 'normal') => {
+        if (diff === 0) return `<span style="color: #2196f3;">0</span>`;
+        
+        let color = '#32ff32'; // Zielony dla wzrostu
+        if (type === 'negative_is_bad' && diff > 0) color = '#f44336'; // Czerwony dla wzrostu strat
+        if (type === 'negative_is_bad' && diff < 0) color = '#32ff32'; // Zielony dla spadku strat
+        if (type === 'normal' && diff < 0) color = '#f44336'; // Czerwony dla spadku statystyk
+        
+        return `<span style="color: ${color}; font-weight: bold;">${diff}</span>`; // Brak znaku plus
+    };
+
+    let html = `
+        <p><strong>Nick:</strong> ${player.nick}</p>
+        <p><strong>Zakon:</strong> ${player.zakon || 'Brak'}</p>
+        <p><strong>Porównanie:</strong> Δ od checkpointa (klucz: ${activeCheckpointKey})</p>
+        
+        <h3>📊 Przyrost Atrybutów (Δ)</h3>
+        <div class="summary-grid">
+    `;
+
+    let totalRaised = 0;
+    
+    for (const attr of attrKeys) {
+        const val = player.base[attr] ?? 0;
+        const basePrev = prevBase[attr] ?? 0;
+        const diff = val - basePrev;
+        totalRaised += diff;
+
+        let diffHtml;
+        if (attr === 'Kondycja' && diff > 0) {
+            diffHtml = `<span style="background-color: #e53935; color: white; font-weight: bold; padding: 2px 4px; border-radius: 3px;">${diff}</span>`;
+        } else {
+            diffHtml = getColoredDelta(diff);
+        }
+
+        html += `
+            <div class="summary-grid-item">
+                <span>${attr}:</span>
+                <span>${val} (Δ ${diffHtml})</span>
+            </div>
+        `;
+    }
+
+    // Łącznie Podniesione Atrybuty (Zmienione na pomarańczowy/żółty fbbc04)
+    html += `
+            <div class="summary-grid-item" style="grid-column: 1 / span 2; border-top: 1px solid #333; margin-top: 10px;">
+                <span style="color: #fbbc04;">Łącznie Podniesione Atrybuty:</span>
+                <span style="color: #fbbc04; font-weight: bold;">${totalRaised}</span>
+            </div>
+        </div>
+    `;
+
+// 2. Statystyki Walk i Łupu (NOWA KOLEJNOŚĆ)
+    html += `
+        <h3>⚔️ Statystyki Walk i Łupu (Δ)</h3>
+        <div class="summary-grid">
+    `;
+    
+    // Definiujemy nową kolejność statystyk w parach
+    const orderedStats = [
+        "Poziom", "Wygranych turniejów",
+        "Łup zdobyty", "Łup stracony",
+        "Zwycięstwa", "Porażki",
+        "Remisy"
+    ];
+
+    let totalFights = 0;
+    
+    for (const statName of orderedStats) {
+        const val = player.stats[statName] ?? 0;
+        const statPrev = prevStats[statName] ?? 0;
+        const diff = val - statPrev;
+        
+        const isNegativeStat = (statName === "Łup stracony" || statName === "Porażki");
+        const diffHtml = getColoredDelta(diff, isNegativeStat ? 'negative_is_bad' : 'normal');
+
+        if (["Zwycięstwa", "Remisy", "Porażki"].includes(statName)) {
+            totalFights += diff;
+        }
+
+        // Jeśli to Remisy, zajmują one całą szerokość lub są wyrównane do lewej (zależnie od grid)
+        const gridStyle = statName === "Remisy" ? 'style="grid-column: 1 / span 1;"' : '';
+
+        html += `
+            <div class="summary-grid-item" ${gridStyle}>
+                <span>${statName}:</span>
+                <span>${val} (Δ ${diffHtml})</span>
+            </div>
+        `;
+    }
+    
+    // Łączna Liczba Walk
+    html += `
+        <div class="summary-grid-item" style="grid-column: 1 / span 2; border-top: 1px solid #333; margin-top: 10px;">
+            <span style="color: #fbbc04;">Łączna Liczba Walk:</span>
+            <span style="color: #fbbc04; font-weight: bold;">${totalFights}</span>
+        </div>
+        </div>
+    `;
+
+    const deltaLupZdobyty = (player.stats["Łup zdobyty"] ?? 0) - (prevStats["Łup zdobyty"] ?? 0);
+    const deltaLupStracony = (player.stats["Łup stracony"] ?? 0) - (prevStats["Łup stracony"] ?? 0);
+    const deltaZwyciestwa = (player.stats["Zwycięstwa"] ?? 0) - (prevStats["Zwycięstwa"] ?? 0);
+    const deltaRemisy = (player.stats["Remisy"] ?? 0) - (prevStats["Remisy"] ?? 0);
+    const deltaPorazki = (player.stats["Porażki"] ?? 0) - (prevStats["Porażki"] ?? 0);
+
+    const fightsForGain = deltaZwyciestwa + deltaRemisy;
+    const avgGain = fightsForGain > 0 ? (deltaLupZdobyty / fightsForGain).toFixed(2) : "0";
+    const avgLoss = deltaPorazki > 0 ? (deltaLupStracony / deltaPorazki).toFixed(2) : "0";
+    const percentLost = deltaLupZdobyty > 0 ? ((deltaLupStracony / deltaLupZdobyty) * 100).toFixed(1) + "%" : "0%";
+
+    html += `
+        <h3>✨ Dodatkowe Wskaźniki</h3>
+        <div class="summary-grid">
+            <div class="summary-grid-item">
+                <span>Średni Zysk (za walkę):</span>
+                <span style="color: #32ff32; font-weight: bold;">${avgGain}</span>
+            </div>
+            <div class="summary-grid-item">
+                <span>Średnia Strata (za porażkę):</span>
+                <span style="color: #f44336; font-weight: bold;">${avgLoss}</span>
+            </div>
+            <div class="summary-grid-item">
+                <span>% Straconego Łupu:</span>
+                <span style="color: #2196f3; font-weight: bold;">${percentLost}</span>
+            </div>
+        </div>
+    `;
+
+    content.innerHTML = html;
+    modal.style.display = 'flex';
 }
 
-function saveCheckpointAndClear() {
-  saveCheckpoint();
-  document.getElementById("inputHTML").value = "";
+function extractMultipleAndClear() { extractMultiple(); document.getElementById("inputHTML").value = ""; }
+function saveCheckpointAndClear() { saveCheckpoint(); document.getElementById("inputHTML").value = ""; }
+
+let attrsHidden = false; // stan ukrycia atrybutów
+function toggleAttributes() {
+  const table = document.getElementById("dataTable");
+  if (!table) return;
+
+  // kolumny: #=0, Nick=1, Zakon=2, potem atrybuty (po 2 kolumny: wartość + ⇅), oraz "Staty (Δ)" (np. indeks 15)
+  const colsToToggle = [3,4,5,6,7,8,9,10,11,12,13,14,15];
+
+  colsToToggle.forEach(idx => {
+    for (const row of table.rows) {
+      if (row.cells[idx]) {
+        row.cells[idx].style.display = attrsHidden ? "" : "none";
+      }
+    }
+  });
+
+  attrsHidden = !attrsHidden;
+  document.getElementById("toggleAttrBtn").textContent = attrsHidden ? "Pokaż atrybuty" : "Ukryj atrybuty";
+}
+
+let tournamentsHidden = false; // NOWA flaga stanu ukrycia turniejów
+function toggleTournaments() {
+  const table = document.getElementById("dataTable");
+  if (!table) return;
+
+  // Kolumny: Wygranych turniejów (indeks 21) oraz ⇅ (indeks 22)
+  // W oryginalnym kodzie kolumny turniejów to indeksy 21 i 22
+  // Zliczanie indeksów: Poziom (16,17), Łup zd. (18,19), Łup str. (20), Turnieje (21, 22), Zwy. (23), Rem. (24), Por. (25)
+  const turniejIndex = 21; 
+  const colsToToggle = [turniejIndex, turniejIndex + 1];
+
+  colsToToggle.forEach(idx => {
+    for (const row of table.rows) {
+      // Wiersz nagłówków (0) ma o jedną komórkę mniej na koniec (brakuje kolumny Δ, która jest w Zwycięstwa)
+      // W wierszu nagłówków, turniej to indeks 20 i 21
+      if (row.cells[idx]) row.cells[idx].style.display = tournamentsHidden ? "" : "none";
+    }
+  });
+
+  tournamentsHidden = !tournamentsHidden;
+  document.getElementById("toggleTournamentsBtn").textContent = tournamentsHidden 
+    ? "Pokaż turnieje" 
+    : "Ukryj turnieje";
+}
+
+
+let statsHidden = false; // stan ukrycia kolumn poziom/łupy/walki
+function toggleStatsColumns() {
+  const table = document.getElementById("dataTable");
+  if (!table) return;
+
+  // kolumny do ukrycia (bez turniejów):
+  // Poziom (16, 17), Łup zdobyty (18, 19), Łup stracony (20)
+  // Zwycięstwa (23), Remisy (24), Porażki (25)
+  const colsToToggle = [16, 17, 18, 19, 20, 23, 24, 25];
+
+  colsToToggle.forEach(idx => {
+    for (const row of table.rows) {
+      if (row.cells[idx]) {
+        row.cells[idx].style.display = statsHidden ? "" : "none";
+      }
+    }
+  });
+
+  statsHidden = !statsHidden;
+  document.getElementById("toggleStatsBtn").textContent = statsHidden 
+    ? "Pokaż poziom, łupy i walki" 
+    : "Ukryj poziom, łupy i walki";
+}
+
+
+function guildClassFor(zakon) {
+  if (!zakon) return 'guild-default';
+  const z = zakon.trim();
+  if (z === '[-U-]' || z === '[[PD]]') return 'guild-u';
+  if (z === '[IMP]' || z === '[Temp]') return 'guild-imp';
+  if (z === '[F-FUN]') return 'guild-fun';
+  return 'guild-default';
 }
 
 function extractMultiple() {
   const allHTML = document.getElementById("inputHTML").value;
-  if (!allHTML.trim()) {
-    alert("Wklej kod profili do pola tekstowego.");
-    return;
-  }
+  if (!allHTML.trim()) { alert("Wklej kod profili do pola tekstowego."); return; }
+  
+  // Ładowanie aktywnego checkpointa (lokalnego lub globalnego)
+  const activeCheckpointKey = getActiveCheckpointKey();
+  const checkpoint = loadCheckpointData(activeCheckpointKey);
 
-  const profilesRaw = allHTML.split(/(?=<!DOCTYPE html PUBLIC)/i);
-  const checkpoint = JSON.parse(localStorage.getItem("bkCheckpoint") || "{}");
   const checkpointBase = checkpoint.base || {};
   const checkpointStats = checkpoint.stats || {};
 
-  const allResults = [];
+  const profilesRaw = allHTML.split(/(?=<!DOCTYPE html PUBLIC)/i);
+  const allResultsRaw = []; // Tymczasowa tablica na wszystkie sparsowane profile
   for (const profRaw of profilesRaw) {
     if (!profRaw.trim()) continue;
-    try {
-      const parsed = parseSingleProfile(profRaw);
-      allResults.push(parsed);
-    } catch {}
+    try { const parsed = parseSingleProfile(profRaw); allResultsRaw.push(parsed); } catch {}
   }
 
-  if (allResults.length === 0) {
-    document.getElementById("result").innerHTML = "<p>Nie znaleziono żadnych poprawnych profili.</p>";
-    return;
+  // >>> DEDUPLIKACJA GRACZY <<<
+  const uniqueResults = {};
+  for (const player of allResultsRaw) {
+    const canonical = getCanonicalNick(player.nick);
+    // Używamy canonical jako klucza, by uniknąć duplikatów tego samego gracza.
+    if (!uniqueResults[canonical]) {
+        uniqueResults[canonical] = player;
+    }
+  }
+  const allResults = Object.values(uniqueResults); // Ostateczna, unikalna tablica
+  // >>> KONIEC POPRAWKI <<<
+
+  if (allResults.length === 0) { 
+    document.getElementById("result").innerHTML = "<p>Nie znaleziono żadnych poprawnych profili.</p>"; 
+    return; 
   }
 
   const baseHeaders = attrKeys.map(a => a);
   const statsHeaders = Object.values(statKeys);
-
-  // statystyki z pojedynczą kolumną (tylko Δ)
   const diffOnlyStats = ["Łup stracony", "Zwycięstwa", "Remisy", "Porażki"];
 
-  // --- Nagłówki tabeli ---
+  // ===== TWORZENIE NAGŁÓWKÓW =====
   let html = `<table id="dataTable"><thead><tr><th>#</th><th>Nick</th><th>Zakon</th>`;
-  // atrybuty bazowe: wartość + diff
+
+  // kolumny atrybutów
   for (const header of baseHeaders) {
     const disp = displayNames[header] || header;
     html += `<th>${disp}</th><th>&#8645;</th>`;
   }
-  // statystyki: część tylko Δ, reszta wartość + Δ
+
+  // nowa kolumna suma podniesionych statów
+  html += `<th>Staty (Δ)</th>`;
+
+  // kolumny pozostałych statystyk
   for (const stat of statsHeaders) {
     const disp = displayNames[stat] || stat;
     if (diffOnlyStats.includes(stat)) {
@@ -357,30 +806,73 @@ function extractMultiple() {
       html += `<th>${disp}</th><th>&#8645;</th>`;
     }
   }
+
+  // ===== NOWE KOLUMNY: Średni zysk / Średnia strata / % straconego łupu =====
+  html += `<th style="display:none">Średni zysk</th>`;
+  html += `<th style="display:none">Średnia strata</th>`;
+  html += `<th style="display:none">% straconego łupu</th>`;
+
   html += `</tr></thead><tbody>`;
 
-  // --- Wiersze ---
+  // ===== WYPEŁNIANIE WIERSZY =====
   let rowIndex = 1;
   for (const player of allResults) {
     const canonical = getCanonicalNick(player.nick);
+    const prevStats = checkpointStats[canonical] || {};
+    const prevBase = checkpointBase[canonical] || {};
+
+// Obliczamy średni zysk: przyrost Łupu / (Zwycięstwa + Remisy)
+const deltaLupZdobyty = (player.stats["Łup zdobyty"] ?? 0) - (prevStats["Łup zdobyty"] ?? 0);
+const deltaZwyciestwa = (player.stats["Zwycięstwa"] ?? 0) - (prevStats["Zwycięstwa"] ?? 0);
+const deltaRemisy = (player.stats["Remisy"] ?? 0) - (prevStats["Remisy"] ?? 0);
+
+const fights = (deltaZwyciestwa + deltaRemisy);
+const avgGain = fights ? (deltaLupZdobyty / fights).toFixed(2) : "0";
+
+
+    // średnia strata
+    const deltaLupStracony = (player.stats["Łup stracony"] ?? 0) - (prevStats["Łup stracony"] ?? 0);
+    const deltaPorazki = (player.stats["Porażki"] ?? 0) - (prevStats["Porażki"] ?? 0);
+    const avgLoss = deltaPorazki ? (deltaLupStracony / deltaPorazki).toFixed(2) : "0";
+
+    // % straconego łupu
+    const percentLost = deltaLupZdobyty ? ((deltaLupStracony / deltaLupZdobyty) * 100).toFixed(1) + "%" : "0%";
+
     html += `<tr><td>${rowIndex++}</td><td>${player.nick}</td><td>${player.zakon}</td>`;
 
-    // atrybuty bazowe
+    // kolumny atrybutów + przyrosty (ZMODYFIKOWANA PĘTLA DLA KONDYCJI)
     for (const attr of baseHeaders) {
       const val = player.base[attr] ?? 0;
-      const basePrev = checkpointBase[canonical]?.[attr];
+      const basePrev = prevBase[attr];
       const diff = basePrev !== undefined ? val - basePrev : null;
-      html += `<td>${val}</td><td>${formatDiff(diff, attr)}</td>`;
-    }
+      
+      let diffCellStyles = '';
+      // Jeśli jest to różnica Kondycji i Kondycja wzrosła (Δ > 0)
+      if (attr === 'Kondycja' && diff > 0) {
+        // Czerwone tło, biały tekst, pogrubienie
+        diffCellStyles = ' style="background-color: #e53935; color: white; font-weight: bold;"';
+      } 
 
-    // statystyki
+      html += `<td>${val}</td><td${diffCellStyles}>${formatDiff(diff, attr)}</td>`;
+    }
+    // KONIEC ZMODYFIKOWANEJ PĘTLI
+
+    // suma podniesionych statów
+    let totalRaised = 0;
+    for (const attr of baseHeaders) {
+      const basePrev = prevBase[attr];
+      const diff = basePrev !== undefined ? player.base[attr] - basePrev : 0;
+      totalRaised += diff;
+    }
+    html += `<td>${formatDiff(totalRaised, 'Staty')}</td>`;
+
+    // kolumny statystyk
     for (const stat of statsHeaders) {
       const val = player.stats[stat] ?? 0;
-      const statPrev = checkpointStats[canonical]?.[stat];
+      const statPrev = prevStats[stat];
       const rawDiff = statPrev !== undefined ? val - statPrev : null;
 
       if (diffOnlyStats.includes(stat)) {
-        // ważne: przy braku checkpointu pokaż "0", a nie pustą komórkę
         const diff = (rawDiff === null) ? 0 : rawDiff;
         html += `<td>${formatDiff(diff, stat)}</td>`;
       } else {
@@ -388,14 +880,21 @@ function extractMultiple() {
       }
     }
 
-    html += "</tr>";
+    // ===== NOWE KOLUMY =====
+    html += `<td style="display:none">${avgGain}</td>`;
+    html += `<td style="display:none">${avgLoss}</td>`;
+    html += `<td style="display:none">${percentLost}</td>`;
+
+    html += `</tr>`;
   }
-  html += "</tbody></table>";
+
+  html += `</tbody></table>`;
 
   document.getElementById("result").innerHTML = html;
 
-  // zapis danych do ewentualnego checkpointu
+  // zapis bieżących danych
   window.currentData = { base: {}, stats: {} };
+  window.lastResults = allResults; // <<< Zapis całego zbioru dla podsumowania (już unikalnego)
   for (const p of allResults) {
     const canonical = getCanonicalNick(p.nick);
     window.currentData.base[canonical] = p.base;
@@ -412,34 +911,20 @@ function extractMultiple() {
 
 
 
+
 function detectUnmatchedPlayers(newPlayers, checkpoint) {
   const checkpointNicks = Object.keys(checkpoint.base || {});
-
-  // kanoniczne klucze nowych danych
   const canonicalNewKeys = newPlayers.map(p => getCanonicalNick(p.nick));
   const missing = checkpointNicks.filter(n => !canonicalNewKeys.includes(n));
-
-  // „extra” = te nowe nicki, które nie mają kanonicznego klucza w checkpoint
-  const extra = newPlayers
-    .filter(p => !checkpointNicks.includes(getCanonicalNick(p.nick)))
-    .map(p => p.nick);
-
-  // deduplikacja extra
+  const extra = newPlayers.filter(p => !checkpointNicks.includes(getCanonicalNick(p.nick))).map(p => p.nick);
   const extraUnique = [...new Set(extra)];
   return { missing, extra: extraUnique };
 }
 
 function showAliasManager(missing, extra) {
   const box = document.getElementById("aliasManager");
-
-  if (!missing.length && !extra.length) {
-    box.innerHTML = `<h3>Brak rozjechanych nicków</h3>`;
-    return;
-  }
-  if (!missing.length || !extra.length) {
-    box.innerHTML = `<h3>Dopasuj zmienione nicki:</h3><div>Brakuje par do dopasowania.</div>`;
-    return;
-  }
+  if (!missing.length && !extra.length) { box.innerHTML = `<h3>Brak rozjechanych nicków</h3>`; return; }
+  if (!missing.length || !extra.length) { box.innerHTML = `<h3>Dopasuj zmienione nicki:</h3><div>Brakuje par do dopasowania.</div>`; return; }
 
   let html = `<h3>Dopasuj zmienione nicki</h3>`;
   html += `<table><tr><th>Stary nick (z checkpointu)</th><th>Nowy nick (z obecnych danych)</th></tr>`;
@@ -449,19 +934,15 @@ function showAliasManager(missing, extra) {
       <td>
         <select data-old="${oldNick}" onchange="saveSingleAlias(this)">
           <option value="">-- wybierz --</option>`;
-    for (let newNick of extra) {
-      html += `<option value="${newNick}">${newNick}</option>`;
-    }
+    for (let newNick of extra) { html += `<option value="${newNick}">${newNick}</option>`; }
     html += `</select>
       </td>
     </tr>`;
   }
   html += `</table>`;
-
   box.innerHTML = html;
 }
 
-// zapis pojedynczej pary i NATYCHMIASTOWE odświeżenie tabeli
 function saveSingleAlias(sel) {
   const oldNick = sel.dataset.old;
   const newNick = sel.value;
@@ -469,7 +950,6 @@ function saveSingleAlias(sel) {
   const aliases = loadAliases();
   aliases[oldNick] = newNick;
   saveAliases(aliases);
-  // Po zapisaniu aliasu natychmiast przelicz i odśwież
   extractMultiple();
 }
 
@@ -477,51 +957,232 @@ function addRowHighlighting() {
   const table = document.getElementById("dataTable");
   if (!table) return;
   const rows = table.querySelectorAll("tbody tr");
+
   rows.forEach(row => {
     const nickCell = row.cells[1];
     if (!nickCell) return;
+
     nickCell.style.cursor = "pointer";
+    
+    // --- 1. Pojedyncze kliknięcie (Podświetlanie wiersza) ---
     nickCell.addEventListener("click", () => {
-      rows.forEach(r => r.classList.remove("highlighted"));
-      row.classList.add("highlighted");
+      // Przywróć wszystkie wiersze do normalnego stanu
+      rows.forEach(r => {
+        for (const cell of r.cells) {
+          cell.style.color = "";       
+          cell.style.fontWeight = "";  
+          const diffIndex = 8; // Kondycja Δ
+          if (r.cells[diffIndex] && r.cells[diffIndex].style.backgroundColor !== "rgb(229, 57, 53)") {
+             r.cells[diffIndex].style.backgroundColor = "";
+          }
+        }
+      });
+
+      // Podświetl kliknięty wiersz
+      for (const cell of row.cells) {
+        cell.style.color = "#fbbc04";
+        cell.style.fontWeight = "bold";
+        const diffIndex = 8;
+        if (cell.cellIndex === diffIndex && cell.style.backgroundColor === "rgb(229, 57, 53)") {
+             cell.style.color = "white";
+        }
+      }
+    });
+
+    // --- 2. PODWÓJNE KLIKNIĘCIE (Wywołuje szczegółowe okno) ---
+    nickCell.addEventListener("dblclick", (e) => {
+        e.preventDefault(); // Blokuje domyślne zaznaczanie tekstu
+        showPlayerSummaryPopup(nickCell.textContent.trim());
     });
   });
 }
 
+
 function saveCheckpoint() {
-  if (!window.currentData) {
-    alert("Brak danych do zapisu. Najpierw wyciągnij dane.");
-    return;
+  if (!window.currentData) { alert("Brak danych do zapisu. Najpierw wyciągnij dane."); return; }
+  localStorage.setItem(LOCAL_CHECKPOINT_KEY, JSON.stringify(window.currentData));
+  alert("Checkpoint lokalny zapisany!");
+  
+  // Przełączenie na lokalny, jeśli był aktywny globalny
+  const activeKey = getActiveCheckpointKey();
+  if (activeKey !== LOCAL_CHECKPOINT_KEY) {
+    loadGlobalCheckpoint(''); // Wyczyść aktywny, przełącz na lokalny
   }
-  localStorage.setItem("bkCheckpoint", JSON.stringify(window.currentData));
-  alert("Checkpoint zapisany!");
+  
   document.getElementById("extractBtn").textContent = "Porównaj";
 }
 
+// ZMODYFIKOWANA FUNKCJA RESETU
 function resetCheckpoint() {
-  localStorage.removeItem("bkCheckpoint");
+  localStorage.removeItem(LOCAL_CHECKPOINT_KEY);
   localStorage.removeItem("bkAliases");
+  localStorage.removeItem(CURRENT_ACTIVE_CHECKPOINT_KEY); // Resetowanie wyboru aktywnego checkpointa
+  
+  // USUNIĘTO: localStorage.removeItem(GLOBAL_CHECKPOINTS_KEY); - Celowo pozostawia trwałe checkpointy
+  
   document.getElementById("inputHTML").value = "";
   document.getElementById("result").innerHTML = "";
   document.getElementById("aliasManager").innerHTML = "";
-  alert("Checkpoint i aliasy zresetowane!");
+  
+  // Odświeżenie listy rozwijanej
+  initGlobalCheckpoints();
+  
+  alert("Checkpoint lokalny oraz aliasy zresetowane! Trwałe checkpointy (Globalne) zostały zachowane.");
   document.getElementById("extractBtn").textContent = "Wyciągnij dane";
 }
 
 function addTableSorting() {
   const table = document.getElementById("dataTable");
+  if (!table) return;
+
   const headers = table.querySelectorAll("th");
   headers.forEach((header, index) => {
-    // pomijamy kolumnę numeracji (#)
-    if (index === 0) return;
+    if (index === 0) return; // kolumna # nie sortuje
+
     header.addEventListener("click", () => {
-      sortTableByColumn(table, index);
+      const tbody = table.tBodies[0];
+      const rows = Array.from(tbody.querySelectorAll("tr"));
+      const asc = !header.classList.contains("asc");
+
+      // helper: parsuje liczbę z tekstu (usuwa wszystko oprócz cyfr, minus, przecinka, kropki)
+      const parseNumberFrom = (text) => {
+        if (!text) return NaN;
+        const cleaned = text.replace(/\+/g, "").replace("%", "").replace(/[^\d\-,.]/g, "").replace(",", ".");
+        if (cleaned === "" || cleaned === "-" ) return NaN;
+        return parseFloat(cleaned);
+      };
+
+      // sortowanie
+      rows.sort((a, b) => {
+        const Araw = (a.cells[index] && a.cells[index].textContent) ? a.cells[index].textContent.trim() : "";
+        const Braw = (b.cells[index] && b.cells[index].textContent) ? b.cells[index].textContent.trim() : "";
+
+        const numA = parseNumberFrom(Araw);
+        const numB = parseNumberFrom(Braw);
+        const isNumeric = !isNaN(numA) && !isNaN(numB);
+
+        if (isNumeric) {
+          return asc ? numA - numB : numB - numA;
+        } else {
+          // porównanie tekstowe, case-insensitive
+          return asc ? Araw.localeCompare(Braw, undefined, { sensitivity: "base" }) 
+                     : Braw.localeCompare(Araw, undefined, { sensitivity: "base" });
+        }
+      });
+
+      // aktualizacja klas sortowania (asc/desc)
+      headers.forEach(h => h.classList.remove("asc", "desc"));
+      header.classList.add(asc ? "asc" : "desc");
+
+      // wstawienie wierszy w nowej kolejności
+      rows.forEach(row => tbody.appendChild(row));
+
+      // aktualizacja numeru w kolumnie #
       updateRowNumbers(table);
+
+      // przywróć/odśwież highlight kliknięć w wierszach
+      addRowHighlighting();
+
+      // indeksy ostatnich 3 kolumn (dynamicznie)
+      const totalCols = table.rows[0].cells.length;
+      const colGain = totalCols - 3;   // Średni zysk
+      const colLoss = totalCols - 2;   // Średnia strata
+      const colPercent = totalCols - 1; // % straconego łupu
+
+      // PRZYWRÓĆ domyślny wygląd dla kolumn gain/loss (biały tekst, brak tła)
+      rows.forEach(row => {
+        if (row.cells[colGain]) { row.cells[colGain].style.color = "#ffffff"; row.cells[colGain].style.backgroundColor = "transparent"; }
+        if (row.cells[colLoss]) { row.cells[colLoss].style.color = "#ffffff"; row.cells[colLoss].style.backgroundColor = "transparent"; }
+      });
+
+      // tylko jeśli sortujemy po kolumnie gain/loss — pokaż gradient TEJ kolumny
+      if (index === colGain || index === colLoss) {
+        colorExtraColumn(table, index);
+      }
+
+      // zastosuj spójne kolory dla ostatniej kolumny (%) zawsze
+      applyPercentColors(table);
     });
   });
 }
 
-// Funkcja do ponownego numerowania pierwszej kolumny
+
+// Zastosowanie spójnych kolorów dla ostatniej kolumny (%)
+function applyPercentColors(table) {
+  if (!table) return;
+  const totalCols = table.rows[0].cells.length;
+  const colPercent = totalCols - 1;
+  const rows = Array.from(table.tBodies[0].rows);
+
+  const GREEN = "#34a853";   // zielony
+  const YELLOW = "#fbbc04";  // żółty
+  const RED = "#ea4335";     // czerwony
+
+  rows.forEach(row => {
+    const cell = row.cells[colPercent];
+    if (!cell) return;
+
+    const raw = (cell.textContent || "").replace("%", "").replace(",", ".").trim();
+    const val = parseFloat(raw);
+
+    if (isNaN(val)) {
+      cell.style.backgroundColor = "";
+      cell.style.color = "";
+      return;
+    }
+
+    if (val <= 3.0) {
+      cell.style.backgroundColor = GREEN;
+      cell.style.color = "#ffffff";
+    } else if (val > 3.0 && val <= 10.0) {
+      cell.style.backgroundColor = YELLOW;
+      cell.style.color = "#121212";
+    } else { // > 10.0
+      cell.style.backgroundColor = RED;
+      cell.style.color = "#ffffff";
+    }
+
+    cell.style.transition = "background-color .25s ease, color .25s ease";
+  });
+}
+
+
+// funkcja kolorowania gradientem tylko jednej kolumny
+function colorExtraColumn(table, colIndex) {
+  const rows = Array.from(table.tBodies[0].querySelectorAll("tr"));
+  let min = Infinity, max = -Infinity;
+
+  // znajdź min/max w kolumnie
+  rows.forEach(row => {
+    const val = parseFloat(row.cells[colIndex].innerText.replace("%","").replace(",",".") || 0);
+    if(val < min) min = val;
+    if(val > max) max = val;
+  });
+
+  function interpolateColor(value, min, max, reverse=false) {
+    let ratio = (value - min) / ((max - min) || 1);
+    if (reverse) ratio = 1 - ratio;
+
+    let r, g, b = 0;
+    if (ratio < 0.5) {
+      const localRatio = ratio / 0.5;
+      r = 255;
+      g = Math.round(255 * localRatio);
+    } else {
+      const localRatio = (ratio - 0.5) / 0.5;
+      r = Math.round(255 * (1 - localRatio));
+      g = 255;
+    }
+    return `rgb(${r},${g},${b})`;
+  }
+
+  const reverse = (colIndex === table.rows[0].cells.length - 2); // Średnia strata odwrócony gradient
+  rows.forEach(row => {
+    const val = parseFloat(row.cells[colIndex].innerText.replace("%","").replace(",",".") || 0);
+    row.cells[colIndex].style.color = interpolateColor(val, min, max, reverse);
+  });
+}
+
 function updateRowNumbers(table) {
   const rows = table.tBodies[0].querySelectorAll("tr");
   let num = 1;
@@ -541,10 +1202,13 @@ function sortTableByColumn(table, columnIndex) {
   rows.sort((a, b) => {
     let aText = a.cells[columnIndex].innerText.trim();
     let bText = b.cells[columnIndex].innerText.trim();
+
     if (isNumeric) {
-      aText = parseFloat(aText.replace(",", ".")) || 0;
-      bText = parseFloat(bText.replace(",", ".")) || 0;
+      // usuń % jeśli jest
+      aText = parseFloat(aText.replace("%", "").replace(",", ".")) || 0;
+      bText = parseFloat(bText.replace("%", "").replace(",", ".")) || 0;
     }
+
     if (aText > bText) return newSortOrder === "asc" ? 1 : -1;
     if (aText < bText) return newSortOrder === "asc" ? -1 : 1;
     return 0;
@@ -555,68 +1219,532 @@ function sortTableByColumn(table, columnIndex) {
   table.dataset.sortOrder = newSortOrder;
 
   addRowHighlighting();
+
+// ---- dodanie kolorystyki gradientowej ----
+const rowsArray = Array.from(tbody.querySelectorAll("tr"));
+const colGainIndex = table.rows[0].cells.length - 3; // Średni zysk
+const colLossIndex = table.rows[0].cells.length - 2; // Średnia strata
+
+// znajdź min/max dla każdej kolumny
+let minGain = Infinity, maxGain = -Infinity;
+let minLoss = Infinity, maxLoss = -Infinity;
+
+rowsArray.forEach(row => {
+  const gain = parseFloat(row.cells[colGainIndex].innerText.replace("%","").replace(",",".")||0);
+  const loss = parseFloat(row.cells[colLossIndex].innerText.replace("%","").replace(",",".")||0);
+  if(gain < minGain) minGain = gain;
+  if(gain > maxGain) maxGain = gain;
+  if(loss < minLoss) minLoss = loss;
+  if(loss > maxLoss) maxLoss = loss;
+});
+
+// ustaw kolor tła
+rowsArray.forEach(row => {
+  const gain = parseFloat(row.cells[colGainIndex].innerText.replace("%","").replace(",",".")||0);
+  const loss = parseFloat(row.cells[colLossIndex].innerText.replace("%","").replace(",",".")||0);
+
+  // Średni zysk: jeśli 0 → niebieski, inaczej gradient zielono-czerwony
+  if (gain === 0) {
+      row.cells[colGainIndex].style.backgroundColor = "#2196f3"; // niebieskie tło
+  } else {
+      let ratioGain = (gain - minGain)/(maxGain - minGain || 1); // 0..1
+      let gainColor = `rgb(${Math.floor(255*(1-ratioGain))}, ${Math.floor(255*ratioGain)}, 0)`; 
+      row.cells[colGainIndex].style.backgroundColor = gainColor;
+  }
+
+  // Średnia strata: gradient nadal normalnie
+  let ratioLoss = (loss - minLoss)/(maxLoss - minLoss || 1); // 0..1
+  let lossColor = `rgb(${Math.floor(255*ratioLoss)}, ${Math.floor(255*(1-ratioLoss))}, 0)`;
+  row.cells[colLossIndex].style.backgroundColor = lossColor;
+});
 }
 
-document.addEventListener("dragover", e => {
-  e.preventDefault();
-  e.dataTransfer.dropEffect = "copy";
-});
+document.addEventListener("dragover", e => { e.preventDefault(); e.dataTransfer.dropEffect = "copy"; });
 document.addEventListener("drop", e => {
   e.preventDefault();
   const file = e.dataTransfer.files[0];
   if (file && file.type === "text/plain") {
     const reader = new FileReader();
-    reader.onload = event => {
-      document.getElementById("inputHTML").value = event.target.result;
-      extractMultiple();
-    };
+    reader.onload = event => { document.getElementById("inputHTML").value = event.target.result; extractMultiple(); };
     reader.readAsText(file);
   }
 });
-function exportTableToCSV(filename) {
-    const table = document.getElementById("dataTable");
-    if (!table) {
-        alert("Najpierw wygeneruj tabelę, aby ją wyeksportować.");
-        return;
+
+function copyChangedRows() {
+  const table = document.getElementById("dataTable");
+  if (!table) return;
+
+  let textToCopy = "";
+  const rows = table.tBodies[0].rows;
+
+  for (const row of rows) {
+    const statCell = row.cells[15]; // kolumna "Staty (Δ)"
+    if (!statCell) continue;
+
+    const cellText = statCell.innerText.replace(/\D/g,''); // zostawiamy tylko cyfry
+    if (cellText && parseInt(cellText) > 0) {
+      const rowText = Array.from(row.cells).map(c => c.innerText.trim()).join("\t");
+      textToCopy += rowText + "\n";
     }
-    const csv = [];
-    const headers = table.querySelectorAll("thead th");
-    const headerRow = [];
-    for (let i = 0; i < headers.length; i++) {
-        let text = headers[i].innerText.trim();
-        // Sprawdź, czy tekst zawiera znak strzałki (może być różnie interpretowany)
-        if (text.includes('↔') || text.includes('↕')) { 
-            const prevHeaderText = headers[i - 1].innerText.trim();
-            headerRow.push(`${prevHeaderText} (Zmiana)`);
-        } else {
-            headerRow.push(text);
+  }
+
+  if (!textToCopy) {
+    alert("Brak wierszy ze zmianami do skopiowania.");
+    return;
+  }
+
+  navigator.clipboard.writeText(textToCopy).then(() => {
+    alert("Skopiowano wiersze ze zmianami!");
+  });
+}
+
+let extraHidden = true; // domyślnie ukryte
+
+function toggleExtraColumns() {
+  const table = document.getElementById("dataTable");
+  if (!table) return;
+
+  // Indeksy 3 nowych kolumn po prawej stronie: zawsze ostatnie trzy
+  const totalCols = table.rows[0].cells.length;
+  const colsToToggle = [totalCols-3, totalCols-2, totalCols-1];
+
+  colsToToggle.forEach(idx => {
+    for (const row of table.rows) {
+      if (row.cells[idx]) {
+        row.cells[idx].style.display = extraHidden ? "" : "none";
+      }
+    }
+  });
+
+  extraHidden = !extraHidden;
+  document.getElementById("toggleExtraBtn").textContent = extraHidden ? "Więcej danych" : "Ukryj dodatkowe";
+
+  // jeśli pokazujemy kolumny, ustawiamy gradient kolorów
+  if (!extraHidden) colorExtraColumns(table);
+}
+
+function colorExtraColumns(table) {
+  const tbody = table.tBodies[0];
+  const rowsArray = Array.from(tbody.querySelectorAll("tr"));
+  const colGainIndex = table.rows[0].cells.length - 3; // Średni zysk
+  const colLossIndex = table.rows[0].cells.length - 2; // Średnia strata
+  const colPercentIndex = table.rows[0].cells.length - 1; // % straconego łupu
+
+  let minGain = Infinity, maxGain = -Infinity;
+  let minLoss = Infinity, maxLoss = -Infinity;
+
+  // Helper do formatowania liczb
+  function formatNumber(value, decimals = 1, addPercent = false) {
+    if (isNaN(value)) return "";
+    let formatted = parseFloat(value).toFixed(decimals);
+    if (addPercent) formatted += "%";
+    return formatted;
+  }
+
+  // Obliczenie min/max dla kolorowania gradientowego
+  rowsArray.forEach(row => {
+    const gainCell = row.cells[colGainIndex];
+    const lossCell = row.cells[colLossIndex];
+    
+    // Dodano sprawdzenie istnienia komórki
+    if (gainCell && lossCell) {
+        const gain = parseFloat(gainCell.innerText.replace("%","").replace(",",".")) || 0;
+        const loss = parseFloat(lossCell.innerText.replace("%","").replace(",",".")) || 0;
+        if (!isNaN(gain)) {
+          if(gain < minGain) minGain = gain;
+          if(gain > maxGain) maxGain = gain;
+        }
+        if (!isNaN(loss)) {
+          if(loss < minLoss) minLoss = loss;
+          if(loss > maxLoss) maxLoss = loss;
         }
     }
-    csv.push(headerRow.join(';'));
-    const rows = table.querySelectorAll("tbody tr");
-    rows.forEach(row => {
-        const rowData = [];
-        row.querySelectorAll("td").forEach(cell => {
-            let cellText = cell.innerText.trim();
-            if (cellText.includes(';') || cellText.includes('"')) {
-                cellText = '"' + cellText.replace(/"/g, '""') + '"';
-            }
-            rowData.push(cellText);
-        });
-        csv.push(rowData.join(';'));
-    });
-    const csvContent = csv.join('\n');
-    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement("a");
-    if (link.download !== undefined) {
-        const url = URL.createObjectURL(blob);
-        link.setAttribute("href", url);
-        link.setAttribute("download", filename);
-        link.style.visibility = 'hidden';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+  });
+
+  function interpolateColor(value, min, max, reverse=false) {
+    let ratio = (value - min) / ((max - min) || 1);
+    if (reverse) ratio = 1 - ratio;
+
+    // Gradient: czerwony → żółty → zielony
+    let r, g, b = 0;
+    if (ratio < 0.5) {
+      const localRatio = ratio / 0.5;
+      r = 255;
+      g = Math.round(255 * localRatio);
+    } else {
+      const localRatio = (ratio - 0.5) / 0.5;
+      r = Math.round(255 * (1 - localRatio));
+      g = 255;
     }
+    return `rgb(${r},${g},${b})`;
+  }
+
+  // Kolorowanie każdej komórki i ujednolicone formatowanie
+  rowsArray.forEach(row => {
+    const gainCell = row.cells[colGainIndex];
+    const lossCell = row.cells[colLossIndex];
+    const percentCell = row.cells[colPercentIndex];
+    
+    // Wymagane sprawdzenie istnienia komórki dla bezpieczeństwa
+    if (!gainCell || !lossCell || !percentCell) return;
+
+    let gain = parseFloat(gainCell.innerText.replace("%","").replace(",",".")) || 0;
+    let loss = parseFloat(lossCell.innerText.replace("%","").replace(",",".")) || 0;
+    let percent = parseFloat(percentCell.innerText.replace("%","").replace(",",".")) || 0;
+
+    // Ujednolicone formatowanie
+    gainCell.innerText = formatNumber(gain, 1);
+    lossCell.innerText = formatNumber(loss, 1);
+    percentCell.innerText = formatNumber(percent, 1, true);
+
+    // Gradient dla średniego zysku
+    gainCell.style.color = interpolateColor(gain, minGain, maxGain, false);
+
+    // Gradient dla średniej straty
+    lossCell.style.color = interpolateColor(loss, minLoss, maxLoss, true);
+
+// Kolorowanie ostatniej kolumny % straconego łupu
+if (!isNaN(percent)) {
+  if (percent <= 3.0) {
+    percentCell.style.backgroundColor = "#34a853"; // zielony
+    percentCell.style.color = "#ffffff"; // biały tekst
+  } else if (percent > 3.0 && percent <= 10.0) {
+    percentCell.style.backgroundColor = "#fbbc04"; // żółty
+    percentCell.style.color = "#121212"; // czarny/ciemny tekst
+  } else if (percent > 10.0) {
+    percentCell.style.backgroundColor = "#ea4335"; // czerwony
+    percentCell.style.color = "#ffffff"; // biały tekst
+  }
+} else {
+  percentCell.style.backgroundColor = "";
+  percentCell.style.color = "";
+}
+  });
+} 
+
+// ===================================================================
+// FUNKCJONALNOŚĆ: PODSUMOWANIE ZAKONÓW (ZMODYFIKOWANA)
+// ===================================================================
+
+const GUILD_SUMMARY_STATS = [
+  "Łup zdobyty",
+  "Łup stracony",
+  "Wygranych turniejów", // <<< DODANA NOWA STATYSTYKA
+  "Zwycięstwa",
+  "Remisy",
+  "Porażki"
+];
+
+function showGuildSummary() {
+  const resultDiv = document.getElementById("result");
+  const summaryTable = document.getElementById("summaryTable");
+  const summaryH2 = resultDiv.querySelector('h2[style*="ffd28a"]');
+  const summaryBtn = document.getElementById("showSummaryBtn");
+
+  // --- 1. Logika ukrywania/przełączania ---
+  if (guildSummaryVisible && summaryTable && summaryH2) {
+    summaryTable.remove();
+    summaryH2.remove();
+    guildSummaryVisible = false;
+    summaryBtn.textContent = "Podsumowanie Zakonów";
+    return;
+  }
+  
+  // Ustawienie tekstu przycisku na "Ukryj" przed przetwarzaniem
+  summaryBtn.textContent = "Ukryj podsumowanie zakonów";
+
+
+  const allHTML = document.getElementById("inputHTML").value;
+  let allResults = [];
+  let allResultsRaw = [];
+
+  // ... (Logika parsowania i deduplikacji - bez zmian) ...
+  if (allHTML.trim()) {
+    const profilesRaw = allHTML.split(/(?=<!DOCTYPE html PUBLIC)/i);
+    for (const profRaw of profilesRaw) {
+        if (!profRaw.trim()) continue;
+        try { const parsed = parseSingleProfile(profRaw); allResultsRaw.push(parsed); } catch {}
+    }
+    
+    const uniqueResults = {};
+    for (const player of allResultsRaw) {
+        const canonical = getCanonicalNick(player.nick);
+        if (!uniqueResults[canonical]) {
+            uniqueResults[canonical] = player;
+        }
+    }
+    allResults = Object.values(uniqueResults);
+    
+    if (allResults.length > 0) {
+        window.lastResults = allResults;
+    } else if (window.lastResults && window.lastResults.length > 0) {
+        allResults = window.lastResults;
+    }
+
+  } else if (window.lastResults && window.lastResults.length > 0) {
+    allResults = window.lastResults;
+  }
+  
+  if (allResults.length === 0) {
+     const msg = "<p style='color: #ea4335; font-weight: bold;'>Brak danych do analizy. Wklej dane profili lub wyciągnij je używając 'Wyciągnij dane/Porównaj'.</p>";
+     const oldMsg = resultDiv.querySelector('p[style*="ea4335"]');
+     if (oldMsg) oldMsg.remove();
+     resultDiv.prepend(document.createRange().createContextualFragment(msg));
+     guildSummaryVisible = false; 
+     summaryBtn.textContent = "Podsumowanie Zakonów";
+     return; 
+  }
+
+  const oldMsg = resultDiv.querySelector('p[style*="ea4335"]');
+  if (oldMsg) oldMsg.remove();
+
+  // Ładowanie aktywnego checkpointa
+  const activeCheckpointKey = getActiveCheckpointKey();
+  const checkpoint = loadCheckpointData(activeCheckpointKey);
+  const checkpointBase = checkpoint.base || {};
+  const checkpointStats = checkpoint.stats || {};
+  
+  const allSummaryKeys = [...attrKeys, ...GUILD_SUMMARY_STATS];
+  const guildMap = {}; 
+
+  // Inicjalizacja kluczy dla wszystkich zakonów
+  for (const player of allResults) {
+    const playerZakon = player.zakon ? player.zakon.trim() : 'Brak Zakonu';
+    if (!guildMap[playerZakon]) {
+        guildMap[playerZakon] = { sum: { members: 0, activeMembers: 0, totalRaisedAllAttrs: 0, totalFights: 0 } };
+        for (const key of allSummaryKeys) {
+            guildMap[playerZakon].sum[key] = 0;
+        }
+    }
+  }
+
+  // ===== PĘTLA PRZEZ WYNIKI I AGREGACJA Z POPRAWKĄ NA NOWYCH GRACZY =====
+  for (const player of allResults) {
+    const canonical = getCanonicalNick(player.nick);
+    const prevStats = checkpointStats[canonical] || {};
+    const prevBase = checkpointBase[canonical] || {};
+    
+    const playerZakon = player.zakon ? player.zakon.trim() : 'Brak Zakonu';
+    const guildSum = guildMap[playerZakon].sum;
+
+    guildSum.members++; // Liczba członków zakonu (obecny stan)
+
+    // KLUCZOWA POPRAWKA: Sprawdzamy, czy gracz istniał w checkpoincie (dla liczenia delty)
+    const playerExistedInCheckpoint = checkpointBase.hasOwnProperty(canonical);
+
+    if (playerExistedInCheckpoint) {
+        let playerRaisedAttrs = 0;
+        let playerFights = 0;
+        
+        // Agregacja szczegółowych atrybutów bazowych (Siła, Zręczność, itd.)
+        for (const attr of attrKeys) {
+            const basePrev = prevBase[attr] ?? 0;
+            const diff = (player.base[attr] ?? 0) - basePrev;
+            guildSum[attr] += diff;
+            playerRaisedAttrs += diff;
+        }
+        
+        // Agregacja pozostałych statystyk (Łup, Walki, Turnieje)
+        for (const stat of GUILD_SUMMARY_STATS) { 
+            const val = player.stats[stat] ?? 0;
+            const statPrev = prevStats[stat] ?? 0;
+            const diff = val - statPrev;
+            guildSum[stat] += diff;
+            if (stat === "Zwycięstwa" || stat === "Remisy" || stat === "Porażki") {
+                playerFights += diff;
+            }
+        }
+        
+        // NOWA LOGIKA: Liczenie aktywnych graczy
+        // Dodano sumowanie Wygranych Turniejów do kryterium aktywności
+        if (playerRaisedAttrs > 0 || playerFights > 0 || (player.stats["Łup zdobyty"] - (prevStats["Łup zdobyty"] ?? 0)) > 0 || (player.stats["Łup stracony"] - (prevStats["Łup stracony"] ?? 0)) > 0 || (player.stats["Wygranych turniejów"] - (prevStats["Wygranych turniejów"] ?? 0)) > 0) {
+            guildSum.activeMembers++;
+        }
+        
+        // Zapis sumy do późniejszego filtrowania
+        guildSum.totalRaisedAllAttrs += playerRaisedAttrs;
+        guildSum.totalFights += playerFights;
+
+    }
+    // Jeśli gracz nie istniał w checkpoincie, jego wkład w delta wynosi 0
+  }
+
+  // ===== FILTROWANIE ZAKONÓW BEZ AKTYWNOŚCI =====
+  const activeGuilds = Object.keys(guildMap).filter(guildKey => {
+      const sum = guildMap[guildKey].sum;
+      // Zakon jest aktywny, jeśli ma podniesione atrybuty (totalRaisedAllAttrs > 0) 
+      // lub jakąkolwiek aktywność w walkach/łupach (totalFights > 0 lub Łup > 0)
+      return sum.totalRaisedAllAttrs > 0 || sum.totalFights > 0 || sum["Łup zdobyty"] > 0 || sum["Łup stracony"] > 0 || sum["Wygranych turniejów"] > 0;
+  });
+
+  // ===== GENEROWANIE TABELI WYNIKÓW =====
+  html = `<h2 style="color: #ffd28a;">Podsumowanie Zakonów (Δ od checkpointa)</h2>`;
+  // DODANA NOWA KOLUMNA 'Aktywni Gracze'
+  html += `<table id="summaryTable"><thead><tr><th>Zakon</th><th>Liczba Graczy</th><th>Aktywni Gracze</th>`;
+  
+  // Nagłówki dla atrybutów
+  for (const attr of attrKeys) {
+      const disp = displayNames[attr] || attr;
+      html += `<th>${disp} (Δ)</th>`;
+  }
+  
+  // Nagłówek dla łącznej sumy atrybutów
+  html += `<th>Łącznie Atrybutów (Δ)</th>`; 
+  
+  // Nagłówki dla pozostałych statystyk
+  const otherStats = GUILD_SUMMARY_STATS.filter(stat => stat !== "Wygranych turniejów");
+  for (const stat of otherStats) {
+      html += `<th>${displayNames[stat] || stat} (Δ)</th>`;
+  }
+  
+  // KOLUMNA TURNIEJÓW NA KOŃCU
+  html += `<th>${displayNames["Wygranych turniejów"] || "Wygranych turniejów"} (Δ)</th>`;
+  
+  html += `<th>Łączna Liczba Walk (Δ)</th></tr></thead><tbody>`;
+
+  // Sortowanie AKTYWNYCH zakonów po Łupie Zdobyty (Δ) - malejąco (domyślnie)
+  const sortedActiveGuilds = activeGuilds.sort((a, b) => {
+    return guildMap[b].sum["Łup zdobyty"] - guildMap[a].sum["Łup zdobyty"];
+  });
+
+  for (const guildKey of sortedActiveGuilds) { // Użycie aktywnie posortowanej tablicy
+    const sum = guildMap[guildKey].sum;
+    
+    // Obliczenie sumy przyrostów atrybutów dla wyświetlenia
+    let totalRaisedAllAttrs = 0; 
+    for (const attr of attrKeys) {
+        totalRaisedAllAttrs += sum[attr];
+    }
+    
+    html += `<tr><td>${guildKey}</td><td>${sum.members}</td><td>${sum.activeMembers}</td>`; // DODANA NOWA KOMÓRKA
+    
+    // Kolumny dla poszczególnych atrybutów
+    for (const attr of attrKeys) {
+        const attrDiff = sum[attr];
+        html += `<td>${formatDiff(attrDiff, attr)}</td>`;
+    }
+
+    // Łączna suma atrybutów (Δ)
+    const totalRaisedHtml = formatDiff(totalRaisedAllAttrs, 'Staty'); 
+    html += `<td>${totalRaisedHtml}</td>`;
+
+    // Kolumny pozostałych statystyk
+    for (const stat of otherStats) {
+        html += `<td>${formatDiff(sum[stat], stat)}</td>`;
+    }
+    
+    // KOLUMNA TURNIEJÓW
+    html += `<td>${formatDiff(sum["Wygranych turniejów"], "Wygranych turniejów")}</td>`;
+    
+    // Łączna liczba walk (Δ)
+    const totalFights = sum["Zwycięstwa"] + sum["Remisy"] + sum["Porażki"];
+    const totalFightsHtml = totalFights === 0 ? `<span class="zero-diff">0</span>` : `<span style="color:#ff00ff;font-weight:bold;">${totalFights}</span>`;
+    html += `<td>${totalFightsHtml}</td>`;
+    
+    html += `</tr>`;
+  }
+  
+  html += `</tbody></table>`;
+  
+  // Wstawienie wyników
+  const summaryDiv = document.createElement('div');
+  summaryDiv.innerHTML = html;
+  
+  // Usunięcie poprzedniego podsumowania, jeśli istnieje
+  if (summaryH2) summaryH2.remove();
+  if (summaryTable) summaryTable.remove();
+
+  // Dodanie nowego podsumowania na początek div#result
+  if (summaryDiv.firstChild) {
+    resultDiv.prepend(summaryDiv.firstChild.nextElementSibling); // Tabela
+    resultDiv.prepend(summaryDiv.firstChild); // Nagłówek
+    guildSummaryVisible = true;
+  }
+  
+  // Dodanie podstawowego stylu (bez zmian)
+  const styleId = 'summaryTableStyle';
+  if (!document.getElementById(styleId)) {
+      const style = document.createElement('style');
+      style.id = styleId;
+      style.type = 'text/css';
+      style.innerHTML = `
+        #summaryTable { 
+            margin-bottom: 20px; 
+            width: 100%; 
+            border-collapse: collapse;
+            font-size: 0.9em;
+            white-space: nowrap;
+        }
+        #summaryTable th, #summaryTable td { 
+            border: 1px solid #333; 
+            padding: 10px; 
+            text-align: center;
+        }
+        #summaryTable th { 
+            background-color: #fbbc04; 
+            color: #121212; 
+            font-weight: bold;
+            position: sticky;
+            top: 0;
+            z-index: 2;
+            cursor: pointer; /* Dodanie kursora dla sortowania */
+        }
+        #summaryTable tbody tr:nth-child(odd) { background-color: #000; }
+        #summaryTable tbody tr:nth-child(even) { background-color: #1a1a1a; }
+        #summaryTable td { color: #f0f0f0; }
+      `;
+      document.getElementsByTagName('head')[0].appendChild(style);
+  }
+  
+  // --- 3. Dodanie segregowania kolumn dla nowej tabeli ---
+  addSummaryTableSorting('summaryTable');
+}
+
+// Funkcja sortowania specjalnie dla tabeli podsumowania
+function addSummaryTableSorting(tableId) {
+  const table = document.getElementById(tableId);
+  if (!table) return;
+
+  const headers = table.querySelectorAll("th");
+  headers.forEach((header, index) => {
+    header.addEventListener("click", () => {
+      const tbody = table.tBodies[0];
+      const rows = Array.from(tbody.querySelectorAll("tr"));
+      const asc = !header.classList.contains("asc");
+
+      const parseNumberFrom = (text) => {
+        if (!text) return NaN;
+        // Akceptuje + / - / , / cyfry / . i usuwa resztę (np. Δ)
+        const cleaned = text.replace(/[^\d\-,.]/g, "").replace(",", ".");
+        if (cleaned === "" || cleaned === "-" || cleaned === "+") return NaN;
+        return parseFloat(cleaned);
+      };
+
+      rows.sort((a, b) => {
+        const Araw = (a.cells[index] && a.cells[index].textContent) ? a.cells[index].textContent.trim() : "";
+        const Braw = (b.cells[index] && b.cells[index].textContent) ? b.cells[index].textContent.trim() : "";
+
+        const numA = parseNumberFrom(Araw);
+        const numB = parseNumberFrom(Braw);
+        const isNumeric = !isNaN(numA) && !isNaN(numB);
+
+        if (isNumeric) {
+          return asc ? numA - numB : numB - numA;
+        } else {
+          // Sortowanie tekstowe (dla "Zakon")
+          return asc ? Araw.localeCompare(Braw, undefined, { sensitivity: "base" }) 
+                     : Braw.localeCompare(Araw, undefined, { sensitivity: "base" });
+        }
+      });
+
+      // Aktualizacja klas sortowania (asc/desc)
+      headers.forEach(h => h.classList.remove("asc", "desc"));
+      header.classList.add(asc ? "asc" : "desc");
+
+      // wstawienie wierszy w nowej kolejności
+      rows.forEach(row => tbody.appendChild(row));
+    });
+  });
 }
 </script>
 
