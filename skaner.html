@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>Skaner Wojenny Pro - Final v1.2</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root { --bg: #0f172a; --card: #1e293b; --accent: #38bdf8; --win: #22c55e; --loss: #ef4444; --note: #facc15; }
+        * { box-sizing: border-box; }
+        
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: #f8fafc; padding: 20px; margin: 0; }
+        .wrapper { max-width: 1600px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; align-items: center; }
+        .panel { background: var(--card); padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); width: 100%; }
+        h2 { margin-top: 0; color: var(--accent); border-bottom: 1px solid #334155; padding-bottom: 10px; font-size: 1.2rem; text-align: center; }
+        
+        .input-section { background: #162033; padding: 20px; border-radius: 12px; border: 1px solid #334155; width: 100%; }
+        .input-hint { text-align: center; color: var(--accent); font-weight: bold; margin-bottom: 15px; font-size: 1.1rem; text-transform: uppercase; letter-spacing: 1px; }
+        
+        .my-stats-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 12px; margin-bottom: 20px; width: 100%; }
+        .my-stats-grid div { display: flex; flex-direction: column; }
+        .my-stats-grid label { font-size: 10px; color: #94a3b8; font-weight: bold; margin-bottom: 5px; text-transform: uppercase; text-align: center; }
+        .my-stats-grid input { background: #0f172a; border: 1px solid var(--accent); color: white; padding: 12px; border-radius: 6px; font-weight: bold; text-align: center; font-size: 1rem; width: 100%; }
+
+        .instruction-box { background: rgba(250, 204, 21, 0.1); border: 1px solid var(--note); color: var(--note); padding: 15px; border-radius: 8px; font-size: 14px; margin-bottom: 20px; text-align: center; line-height: 1.5; }
+
+        table { width: 100%; border-collapse: collapse; text-align: center; table-layout: fixed; }
+        th { background: #334155; padding: 12px; font-size: 10px; color: #cbd5e1; text-transform: uppercase; }
+        td { padding: 5px; border: 1px solid #334155; }
+        td input { background: transparent; border: none; color: white; text-align: center; width: 100%; padding: 8px 0; outline: none; font-size: 14px; }
+        tr.active-row { background: rgba(56, 189, 248, 0.1); outline: 2px solid var(--accent); }
+        
+        .dashboard-row { display: grid; grid-template-columns: 1.3fr 1fr 400px; gap: 20px; width: 100%; }
+        .dashboard-row .panel { height: 550px; display: flex; flex-direction: column; }
+        
+        .chart-container { position: relative; flex-grow: 1; width: 100%; min-height: 400px; display: flex; align-items: center; justify-content: center; }
+        canvas { max-width: 100% !important; max-height: 100% !important; }
+
+        .top-list { list-style: none; padding: 0; margin: 0; width: 100%; }
+        .top-list-item { display: flex; justify-content: space-between; align-items: center; padding: 15px; border-bottom: 1px solid #334155; font-size: 15px; }
+        .top-list-item .nick { flex: 1; font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .top-list-item .stats { display: flex; gap: 15px; font-family: monospace; }
+        .match-val { color: var(--accent); font-weight: bold; }
+        
+        .diff-plus { color: var(--win); font-weight: bold; }
+        .diff-minus { color: var(--loss); font-weight: bold; }
+        .btn-add { background: var(--win); color: white; border: none; padding: 12px 30px; border-radius: 6px; cursor: pointer; font-weight: bold; margin: 20px auto 0; display: block; font-size: 14px; transition: transform 0.2s; }
+        .btn-add:hover { transform: scale(1.05); }
+    </style>
+</head>
+<body>
+
+<div class="wrapper">
+    <div class="panel">
+        <h2>Porównanie postaci - losowania wojenne v1.0.3 Copyright by ©Anders 2026</h2>
+        <div class="input-section">
+            <div class="input-hint">DO PÓL PONIŻEJ WPROWADŹ SWÓJ POZIOM ORAZ ATRYBUTY</div>
+            <div class="my-stats-grid">
+                <div><label>Poziom</label><input type="number" id="u_lvl" value="407" oninput="runCalculations()"></div>
+                <div><label>Siła</label><input type="number" id="u_str" value="1863" oninput="runCalculations()"></div>
+                <div><label>Zręczność</label><input type="number" id="u_dex" value="1753" oninput="runCalculations()"></div>
+                <div><label>Kondycja</label><input type="number" id="u_con" value="700" oninput="runCalculations()"></div>
+                <div><label>Szczęście</label><input type="number" id="u_lck" value="4400" oninput="runCalculations()"></div>
+                <div><label>Szansa Trafienia (ST)</label><input type="number" id="u_wep" value="2844" oninput="runCalculations()"></div>
+                <div><label>Szansa Obrony (SO)</label><input type="number" id="u_def" value="1604" oninput="runCalculations()"></div>
+            </div>
+            <div class="instruction-box">
+                <strong>Instrukcja:</strong> Do porównywarki wprowadź wartości takie jakie widzisz na postaci (bazowe + bonus przedmiotów). <br>
+                WAŻNE! - Wprowadź  <strong>ST i SO</strong> swoje oraz przeciwnika (nie UO i UB).
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th width="15%">Nick</th><th width="8%">Lvl</th><th width="10%">Siła</th><th width="10%">Zręczność</th><th width="10%">Kondycja</th><th width="10%">Szczęście</th><th width="10%">ST</th><th width="10%">SO</th><th width="10%">Podob.</th><th width="7%">Bilans</th><th width="5%"></th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody"></tbody>
+            </table>
+            <button class="btn-add" onclick="addOpponent()">DODAJ KOLEJNEGO PRZECIWNIKA</button>
+        </div>
+    </div>
+    <div class="dashboard-row">
+        <div class="panel">
+            <h2 id="radarTitle">Porównanie Atrybutów</h2>
+            <div class="chart-container"><canvas id="radarChart"></canvas></div>
+        </div>
+        <div class="panel">
+            <h2>Bilans %</h2>
+            <div class="chart-container"><canvas id="barChart"></canvas></div>
+        </div>
+        <div class="panel">
+            <h2>Najbardziej podobni (%)</h2>
+            <ul id="topMatchList" class="top-list"></ul>
+        </div>
+    </div>
+</div>
+
+<script>
+    let opponents = JSON.parse(localStorage.getItem('sim_opponents')) || [];
+    let selectedIdx = 0;
+    let radarChart, barChart;
+
+    function pearson(x, y) {
+        let n = x.length, sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0, sumY2 = 0;
+        for (let i = 0; i < n; i++) {
+            sumX += x[i]; sumY += y[i]; sumXY += x[i] * y[i];
+            sumX2 += x[i] * x[i]; sumY2 += y[i] * y[i];
+        }
+        let den = Math.sqrt((n * sumX2 - sumX * sumX) * (n * sumY2 - sumY * sumY));
+        return den === 0 ? 0 : ((n * sumXY) - (sumX * sumY)) / den;
+    }
+
+    function renderTable() {
+        const tbody = document.getElementById('tableBody');
+        tbody.innerHTML = '';
+        opponents.forEach((o, i) => {
+            const tr = document.createElement('tr');
+            if(i === selectedIdx) tr.classList.add('active-row');
+            tr.onclick = (e) => { if(e.target.tagName !== 'INPUT' && e.target.tagName !== 'BUTTON') { selectedIdx = i; renderTable(); runCalculations(); } };
+            tr.innerHTML = `
+                <td><input type="text" value="${o.name}" oninput="updateOpponent(${i}, 'name', this.value)"></td>
+                <td><input type="number" value="${o.lvl}" oninput="updateOpponent(${i}, 'lvl', this.value)"></td>
+                <td><input type="number" value="${o.str}" oninput="updateOpponent(${i}, 'str', this.value)"></td>
+                <td><input type="number" value="${o.dex}" oninput="updateOpponent(${i}, 'dex', this.value)"></td>
+                <td><input type="number" value="${o.con}" oninput="updateOpponent(${i}, 'con', this.value)"></td>
+                <td><input type="number" value="${o.lck}" oninput="updateOpponent(${i}, 'lck', this.value)"></td>
+                <td><input type="number" value="${o.wep}" oninput="updateOpponent(${i}, 'wep', this.value)"></td>
+                <td><input type="number" value="${o.def}" oninput="updateOpponent(${i}, 'def', this.value)"></td>
+                <td id="sim-${i}" style="font-weight:bold; color:var(--accent)">0.00</td>
+                <td id="diff-${i}" style="font-weight:bold">0%</td>
+                <td><button onclick="removeOpponent(${i})" style="background:none; border:none; color:var(--loss); cursor:pointer; font-weight:bold">X</button></td>
+            `;
+            tbody.appendChild(tr);
+        });
+        runCalculations();
+    }
+
+    function updateOpponent(idx, field, val) {
+        opponents[idx][field] = field === 'name' ? val : +val;
+        localStorage.setItem('sim_opponents', JSON.stringify(opponents));
+        runCalculations();
+    }
+
+    function removeOpponent(idx) {
+        opponents.splice(idx, 1);
+        if(selectedIdx >= opponents.length) selectedIdx = Math.max(0, opponents.length - 1);
+        renderTable();
+    }
+
+    function runCalculations() {
+        const u = {
+            lvl: +document.getElementById('u_lvl').value || 1,
+            str: +document.getElementById('u_str').value || 0,
+            dex: +document.getElementById('u_dex').value || 0,
+            con: +document.getElementById('u_con').value || 0,
+            lck: +document.getElementById('u_lck').value || 0,
+            wep: +document.getElementById('u_wep').value || 0,
+            def: +document.getElementById('u_def').value || 0
+        };
+        const uSum = u.str + u.dex + u.con + u.lck + u.wep + u.def;
+        const uData = [u.lvl, u.str, u.dex, u.con, u.lck, u.wep, u.def];
+        localStorage.setItem('sim_user_stats', JSON.stringify(u));
+
+        let sims = [];
+        opponents.forEach((o, i) => {
+            const oSum = o.str + o.dex + o.con + o.lck + o.wep + o.def;
+            const oData = [o.lvl, o.str, o.dex, o.con, o.lck, o.wep, o.def];
+            const sim = pearson(uData, oData).toFixed(6);
+            const diff = ((((o.lvl/u.lvl) + (oSum/uSum))/2 - 1) * 100).toFixed(2);
+            
+            const simCell = document.getElementById(`sim-${i}`);
+            if(simCell) simCell.innerText = sim;
+            
+            const dCell = document.getElementById(`diff-${i}`);
+            if(dCell) {
+                dCell.innerText = (diff >= 0 ? '+' : '') + diff + '%';
+                dCell.className = diff >= 0 ? 'diff-plus' : 'diff-minus';
+            }
+            sims.push({ name: o.name, val: parseFloat(sim), diff: parseFloat(diff) });
+        });
+
+        const list = document.getElementById('topMatchList');
+        list.innerHTML = '';
+        [...sims].sort((a,b) => b.val - a.val).slice(0, 8).forEach((s, idx) => {
+            const diffClass = s.diff >= 0 ? 'diff-plus' : 'diff-minus';
+            const diffSign = s.diff >= 0 ? '+' : '';
+            list.innerHTML += `
+                <li class="top-list-item">
+                    <span class="nick">${idx+1}. ${s.name}</span>
+                    <div class="stats">
+                        <span class="match-val">P: ${(s.val * 100).toFixed(1)}%</span>
+                        <span class="${diffClass}">B: ${diffSign}${s.diff.toFixed(2)}%</span>
+                    </div>
+                </li>`;
+        });
+
+        updateCharts(u, opponents[selectedIdx], sims);
+    }
+
+    function updateCharts(u, o, sims) {
+        if(radarChart) radarChart.destroy();
+        if(o) {
+            document.getElementById('radarTitle').innerText = `Analiza: ${o.name}`;
+            radarChart = new Chart(document.getElementById('radarChart'), {
+                type: 'radar',
+                data: {
+                    labels: ['Siła', 'Zręczność', 'Kondycja', 'Szczęście', 'ST', 'SO'],
+                    datasets: [
+                        { label: 'Ty', data: [u.str, u.dex, u.con, u.lck, u.wep, u.def], borderColor: '#38bdf8', backgroundColor: 'rgba(56, 189, 248, 0.1)', borderWidth: 4 },
+                        { label: o.name, data: [o.str, o.dex, o.con, o.lck, o.wep, o.def], borderColor: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.1)', borderWidth: 4 }
+                    ]
+                },
+                options: { maintainAspectRatio: false, animation: false, scales: { r: { grid: { color: '#445161' }, angleLines: { color: '#445161' }, pointLabels: { color: '#fff', font: { size: 14, weight: 'bold' } }, ticks: { display: false } } }, plugins: { legend: { labels: { color: '#fff', font: { size: 14 } } } } }
+            });
+        }
+        if(barChart) barChart.destroy();
+        barChart = new Chart(document.getElementById('barChart'), {
+            type: 'bar',
+            data: { labels: sims.map(x => x.name), datasets: [{ data: sims.map(x => x.diff), backgroundColor: sims.map(x => x.diff >= 0 ? '#22c55e' : '#ef4444') }] },
+            options: { maintainAspectRatio: false, animation: false, plugins: { legend: { display: false } }, scales: { y: { ticks: { color: '#fff' }, grid: { color: '#334155' } }, x: { ticks: { color: '#fff' } } } }
+        });
+    }
+
+    function addOpponent() {
+        opponents.push({ name: "Wróg", lvl: 200, str: 1000, dex: 1000, con: 500, lck: 1000, wep: 1000, def: 1000 });
+        selectedIdx = opponents.length - 1;
+        renderTable();
+    }
+
+    window.onload = () => {
+        const saved = JSON.parse(localStorage.getItem('sim_user_stats'));
+        if(saved) Object.keys(saved).forEach(k => { if(document.getElementById('u_'+k)) document.getElementById('u_'+k).value = saved[k]; });
+        renderTable();
+    };
+</script>
+</body>
+</html>
