@@ -9,7 +9,7 @@
       color: #f00;
       font-family: Arial, sans-serif;
       text-align: center;
-      max-width: 800px;
+      max-width: 900px;
       margin: auto;
       padding: 20px;
     }
@@ -33,6 +33,7 @@
       cursor: pointer;
       border-radius: 8px;
       transition: background-color 0.3s ease, transform 0.1s ease;
+      font-weight: bold;
     }
 
     button:hover {
@@ -50,7 +51,7 @@
       justify-content: center;
       align-items: flex-end;
       flex-wrap: wrap;
-      gap: 20px;
+      gap: 15px;
       margin-top: 20px;
     }
 
@@ -58,12 +59,12 @@
       display: flex;
       flex-direction: column;
       align-items: flex-start;
-      min-width: 180px;
+      min-width: 140px;
     }
 
     label {
       margin-bottom: 5px;
-      font-size: 14px;
+      font-size: 13px;
       white-space: nowrap;
     }
 
@@ -79,7 +80,7 @@
   </style>
 </head>
 <body>
-  <h1>wklej link do ataku lub wybierz gracza z listy, ustal godzinę, interwał i/lub liczbę ataków lub użyj trybu 60s</h1>
+  <h1>wklej link do ataku lub wybierz gracza z listy, ustal godzinę i interwał (losowy lub stały)</h1>
 
   <input type="text" id="linkInput" placeholder="Wklej tutaj link do ataku" />
 
@@ -174,18 +175,23 @@
     </div>
 
     <div class="form-group">
-      <label for="startTime">🕓 Zaplanuj start na</label>
+      <label for="startTime">🕓 Zaplanuj start</label>
       <input type="datetime-local" id="startTime" step="1"/>
     </div>
 
     <div class="form-group">
-      <label for="attemptsLimit">🔁 Liczba prób (opcjonalna)</label>
+      <label for="attemptsLimit">🔁 Liczba prób</label>
       <input type="number" id="attemptsLimit" placeholder="np. 100" min="1" />
     </div>
 
     <div class="form-group">
-      <label for="intervalMs">⏱️ Interwał (ms, opcjonalny)</label>
-      <input type="number" id="intervalMs" placeholder="np. 120" min="10" />
+      <label for="minMs">⏱️ Min ms</label>
+      <input type="number" id="minMs" placeholder="Domyślnie 120" min="1" />
+    </div>
+
+    <div class="form-group">
+      <label for="maxMs">⏱️ Max ms</label>
+      <input type="number" id="maxMs" placeholder="Domyślnie 120" min="1" />
     </div>
 
     <div class="form-group">
@@ -193,11 +199,11 @@
     </div>
   </div>
 
-  <div id="status">Otworzone: 0</div>
+  <div id="status">Wysłane ataki: 0</div>
 
   <script>
     let openedCount = 0;
-    let interval;
+    let nextAttackTimer;
     let countdown;
     let secondsLeft = 60;
     let plannedStartTimer;
@@ -242,53 +248,56 @@
     function startSpam(link) {
       openedCount = 0;
       secondsLeft = 60;
+      clearTimeout(nextAttackTimer);
+      clearInterval(countdown);
 
       const attemptsLimit = parseInt(document.getElementById("attemptsLimit").value);
-      const intervalDuration = parseInt(document.getElementById("intervalMs").value) || 120;
       const limitByAttempts = !isNaN(attemptsLimit) && attemptsLimit > 0;
+      
+      const minInput = parseInt(document.getElementById("minMs").value);
+      const maxInput = parseInt(document.getElementById("maxMs").value);
+      
+      // Logika domyślności: jeśli puste, bierzemy 120. Jeśli wpisane jedno, drugie staje się równe pierwszemu.
+      const minMs = !isNaN(minInput) ? minInput : (!isNaN(maxInput) ? maxInput : 120);
+      const maxMs = !isNaN(maxInput) ? maxInput : (!isNaN(minInput) ? minInput : 120);
 
       document.title = `${secondsLeft}s - Spamownik BK`;
-      document.getElementById('status').innerText = `Otworzone: 0`;
+      document.getElementById('status').innerText = `Wysłane ataki: 0`;
 
+      // Funkcja wykonująca atak (Fetch w tle)
       const performAction = () => {
         if ((limitByAttempts && openedCount >= attemptsLimit) || secondsLeft <= 0) {
-          clearInterval(interval);
-          clearInterval(countdown);
+          clearTimeout(nextAttackTimer);
           return;
         }
 
-        const newWindow = window.open(link, '_blank');
-        if (newWindow) {
-          openedCount++;
-          document.getElementById('status').innerText = `Otworzone: ${openedCount}`;
-          
-          // --- NOWA FUNKCJA: ZAMYKANIE KARTY ---
-          // Zamyka kartę po 3 sekundach (wystarczy, by serwer odebrał atak)
-          setTimeout(() => {
-            if (newWindow && !newWindow.closed) {
-              newWindow.close();
-            }
-          }, 3000); 
-          // -------------------------------------
+        // FETCH w tle - symulacja otwarcia bez nowej karty
+        fetch(link, { mode: 'no-cors' })
+          .then(() => {
+            openedCount++;
+            document.getElementById('status').innerText = `Wysłane ataki: ${openedCount}`;
+          })
+          .catch(() => {
+            openedCount++;
+            document.getElementById('status').innerText = `Wysłane ataki: ${openedCount}`;
+          });
 
-        } else {
-          document.getElementById('status').innerText = `Zablokowane przez przeglądarkę!`;
-          clearInterval(interval);
-          clearInterval(countdown);
-        }
+        // Losowanie następnego interwału
+        const randomDelay = Math.floor(Math.random() * (maxMs - minMs + 1)) + minMs;
+        nextAttackTimer = setTimeout(performAction, randomDelay);
       };
 
+      // Odliczanie 60s
       countdown = setInterval(() => {
         secondsLeft--;
         document.title = `${secondsLeft}s - Spamownik BK`;
         if (secondsLeft <= 0) {
           clearInterval(countdown);
-          clearInterval(interval);
+          clearTimeout(nextAttackTimer);
         }
       }, 1000);
 
       performAction();
-      interval = setInterval(performAction, intervalDuration);
     }
   </script>
 </body>
