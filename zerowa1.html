@@ -4,90 +4,141 @@
   <meta charset="UTF-8" />
   <title>60s - Spamownik Ataku</title>
   <style>
+    :root {
+      --primary-red: #f00;
+      --hover-red: #d00;
+      --bg-black: #0a0a0a;
+      --input-bg: #1a1a1a;
+    }
+
     body {
       background: #000;
-      color: #f00;
-      font-family: Arial, sans-serif;
+      color: var(--primary-red);
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       text-align: center;
-      max-width: 900px;
+      max-width: 1000px;
       margin: auto;
-      padding: 20px;
+      padding: 40px 20px;
     }
 
-    input, button, select {
-      padding: 10px;
-      margin: 5px 0;
-      border: none;
-      font-size: 16px;
-      box-sizing: border-box;
+    h1 {
+      font-size: 1.2rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 30px;
+      opacity: 0.8;
     }
 
-    input[type="text"] {
+    /* Główne pole linku */
+    #linkInput {
       width: 100%;
-      margin-bottom: 15px;
-    }
-
-    button {
-      background-color: #f00;
+      padding: 15px;
+      background: var(--input-bg);
+      border: 1px solid #333;
       color: #fff;
-      cursor: pointer;
       border-radius: 8px;
-      transition: background-color 0.3s ease, transform 0.1s ease;
-      font-weight: bold;
+      font-size: 16px;
+      margin-bottom: 25px;
+      transition: border-color 0.3s;
     }
 
-    button:hover {
-      background-color: #d00;
-      transform: scale(1.05);
+    #linkInput:focus {
+      outline: none;
+      border-color: var(--primary-red);
     }
 
-    #status {
-      margin-top: 20px;
-      font-size: 18px;
-    }
-
-    .row {
-      display: flex;
-      justify-content: center;
-      align-items: flex-end;
-      flex-wrap: wrap;
-      gap: 15px;
-      margin-top: 20px;
+    /* Kontener siatki dla ustawień */
+    .settings-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      background: #0a0a0a;
+      padding: 25px;
+      border-radius: 12px;
+      border: 1px solid #222;
+      align-items: end;
     }
 
     .form-group {
       display: flex;
       flex-direction: column;
-      align-items: flex-start;
-      min-width: 140px;
+      text-align: left;
     }
 
     label {
-      margin-bottom: 5px;
-      font-size: 13px;
-      white-space: nowrap;
+      font-size: 12px;
+      font-weight: bold;
+      margin-bottom: 8px;
+      color: #888;
+      text-transform: uppercase;
     }
 
-    select {
-      min-width: 200px;
+    input, select {
+      background: var(--input-bg);
+      border: 1px solid #333;
+      color: #fff;
+      padding: 12px;
+      border-radius: 6px;
+      font-size: 14px;
+      width: 100%;
+    }
+
+    input:focus, select:focus {
+      outline: none;
+      border-color: var(--primary-red);
+    }
+
+    /* Przycisk START */
+    .btn-start {
+      background-color: var(--primary-red);
+      color: #fff;
+      font-weight: bold;
+      cursor: pointer;
+      border: none;
+      padding: 14px;
+      border-radius: 6px;
+      font-size: 16px;
+      transition: all 0.3s ease;
+      text-transform: uppercase;
+      grid-column: span 1;
+    }
+
+    .btn-start:hover {
+      background-color: var(--hover-red);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(255, 0, 0, 0.3);
+    }
+
+    .btn-start:active {
+      transform: translateY(0);
+    }
+
+    /* Status i licznik */
+    #status {
+      margin-top: 40px;
+      font-size: 24px;
+      font-weight: bold;
+      padding: 20px;
+      border-top: 1px solid #222;
     }
 
     @media (max-width: 600px) {
-      .form-group {
-        min-width: 100%;
+      .settings-grid {
+        grid-template-columns: 1fr;
       }
     }
   </style>
 </head>
 <body>
-  <h1>wklej link do ataku lub wybierz gracza z listy, ustal godzinę i interwał (losowy lub stały)</h1>
+  <h1>Panel Sterowania Atakiem</h1>
 
   <input type="text" id="linkInput" placeholder="Wklej tutaj link do ataku" />
 
-  <div class="row">
-    <div class="form-group" style="min-width: 100%;">
+  <div class="settings-grid">
+    <div class="form-group" style="grid-column: auto;">
+      <label>🎯 Wybierz cel</label>
       <select id="linkSelector" onchange="selectLink(this)">
-        <option value="">⬇️ Wybierz gracza z listy</option>
+        <option value="">⬇️ Lista graczy</option>
         <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=3036661">Adanio</option>
         <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1196055">alkmaar</option>
         <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1273120">Anders</option>
@@ -175,28 +226,26 @@
     </div>
 
     <div class="form-group">
-      <label for="startTime">🕓 Zaplanuj start</label>
+      <label>🕓 Start (godzina)</label>
       <input type="datetime-local" id="startTime" step="1"/>
     </div>
 
     <div class="form-group">
-      <label for="attemptsLimit">🔁 Liczba prób</label>
-      <input type="number" id="attemptsLimit" placeholder="np. 100" min="1" />
+      <label>🔁 Max prób</label>
+      <input type="number" id="attemptsLimit" placeholder="Opcjonalnie"/>
     </div>
 
     <div class="form-group">
-      <label for="minMs">⏱️ Min ms</label>
-      <input type="number" id="minMs" placeholder="Domyślnie 120" min="1" />
+      <label>⏱️ Min (ms)</label>
+      <input type="number" id="minMs" placeholder="120"/>
     </div>
 
     <div class="form-group">
-      <label for="maxMs">⏱️ Max ms</label>
-      <input type="number" id="maxMs" placeholder="Domyślnie 120" min="1" />
+      <label>⏱️ Max (ms)</label>
+      <input type="number" id="maxMs" placeholder="120"/>
     </div>
 
-    <div class="form-group">
-      <button onclick="planOrStart()">START</button>
-    </div>
+    <button class="btn-start" onclick="planOrStart()">Rozpocznij</button>
   </div>
 
   <div id="status">Wysłane ataki: 0</div>
@@ -206,7 +255,6 @@
     let nextAttackTimer;
     let countdown;
     let secondsLeft = 60;
-    let plannedStartTimer;
 
     function selectLink(selectElement) {
       const selectedLink = selectElement.value;
@@ -235,11 +283,8 @@
 
         const msToStart = plannedTime - now;
         document.getElementById("status").innerText = `Zaplanowano na ${plannedTime.toLocaleTimeString()}...`;
-        document.title = `Czeka na start o ${plannedTime.toLocaleTimeString()}`;
-
-        plannedStartTimer = setTimeout(() => {
-          startSpam(link);
-        }, msToStart);
+        
+        setTimeout(() => startSpam(link), msToStart);
       } else {
         startSpam(link);
       }
@@ -257,21 +302,15 @@
       const minInput = parseInt(document.getElementById("minMs").value);
       const maxInput = parseInt(document.getElementById("maxMs").value);
       
-      // Logika domyślności: jeśli puste, bierzemy 120. Jeśli wpisane jedno, drugie staje się równe pierwszemu.
       const minMs = !isNaN(minInput) ? minInput : (!isNaN(maxInput) ? maxInput : 120);
       const maxMs = !isNaN(maxInput) ? maxInput : (!isNaN(minInput) ? minInput : 120);
 
-      document.title = `${secondsLeft}s - Spamownik BK`;
-      document.getElementById('status').innerText = `Wysłane ataki: 0`;
-
-      // Funkcja wykonująca atak (Fetch w tle)
       const performAction = () => {
         if ((limitByAttempts && openedCount >= attemptsLimit) || secondsLeft <= 0) {
           clearTimeout(nextAttackTimer);
           return;
         }
 
-        // FETCH w tle - symulacja otwarcia bez nowej karty
         fetch(link, { mode: 'no-cors' })
           .then(() => {
             openedCount++;
@@ -282,15 +321,13 @@
             document.getElementById('status').innerText = `Wysłane ataki: ${openedCount}`;
           });
 
-        // Losowanie następnego interwału
         const randomDelay = Math.floor(Math.random() * (maxMs - minMs + 1)) + minMs;
         nextAttackTimer = setTimeout(performAction, randomDelay);
       };
 
-      // Odliczanie 60s
       countdown = setInterval(() => {
         secondsLeft--;
-        document.title = `${secondsLeft}s - Spamownik BK`;
+        document.title = `${secondsLeft}s - Spamownik`;
         if (secondsLeft <= 0) {
           clearInterval(countdown);
           clearTimeout(nextAttackTimer);
