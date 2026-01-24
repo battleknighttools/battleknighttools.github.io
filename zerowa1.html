@@ -9,6 +9,7 @@
       --hover-red: #d00;
       --bg-black: #0a0a0a;
       --input-bg: #1a1a1a;
+      --border-color: #333;
     }
 
     body {
@@ -22,11 +23,11 @@
     }
 
     h1 {
-      font-size: 1.2rem;
+      font-size: 1.1rem;
       text-transform: uppercase;
       letter-spacing: 1px;
-      margin-bottom: 30px;
-      opacity: 0.8;
+      margin-bottom: 25px;
+      line-height: 1.5;
     }
 
     /* Główne pole linku */
@@ -34,26 +35,21 @@
       width: 100%;
       padding: 15px;
       background: var(--input-bg);
-      border: 1px solid #333;
+      border: 1px solid var(--border-color);
       color: #fff;
       border-radius: 8px;
       font-size: 16px;
-      margin-bottom: 25px;
-      transition: border-color 0.3s;
+      margin-bottom: 20px;
+      box-sizing: border-box;
     }
 
-    #linkInput:focus {
-      outline: none;
-      border-color: var(--primary-red);
-    }
-
-    /* Kontener siatki dla ustawień */
+    /* Nowoczesna siatka ustawień */
     .settings-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 20px;
-      background: #0a0a0a;
-      padding: 25px;
+      grid-template-columns: repeat(3, 1fr); /* 3 kolumny */
+      gap: 15px;
+      background: var(--bg-black);
+      padding: 20px;
       border-radius: 12px;
       border: 1px solid #222;
       align-items: end;
@@ -65,80 +61,76 @@
       text-align: left;
     }
 
+    /* Pełna szerokość dla listy graczy w siatce */
+    .full-width {
+      grid-column: span 3;
+    }
+
     label {
-      font-size: 12px;
+      font-size: 11px;
       font-weight: bold;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
       color: #888;
       text-transform: uppercase;
     }
 
     input, select {
       background: var(--input-bg);
-      border: 1px solid #333;
+      border: 1px solid var(--border-color);
       color: #fff;
       padding: 12px;
       border-radius: 6px;
       font-size: 14px;
       width: 100%;
+      box-sizing: border-box;
     }
 
-    input:focus, select:focus {
-      outline: none;
-      border-color: var(--primary-red);
-    }
-
-    /* Przycisk START */
+    /* Przycisk START na całą szerokość dolnego rzędu lub jako osobny blok */
     .btn-start {
+      grid-column: span 3;
       background-color: var(--primary-red);
       color: #fff;
       font-weight: bold;
       cursor: pointer;
       border: none;
-      padding: 14px;
+      padding: 16px;
       border-radius: 6px;
-      font-size: 16px;
-      transition: all 0.3s ease;
+      font-size: 18px;
+      transition: all 0.2s ease;
       text-transform: uppercase;
-      grid-column: span 1;
+      margin-top: 10px;
     }
 
     .btn-start:hover {
       background-color: var(--hover-red);
-      transform: translateY(-2px);
-      box-shadow: 0 4px 15px rgba(255, 0, 0, 0.3);
+      box-shadow: 0 0 15px rgba(255, 0, 0, 0.4);
     }
 
-    .btn-start:active {
-      transform: translateY(0);
-    }
-
-    /* Status i licznik */
     #status {
-      margin-top: 40px;
-      font-size: 24px;
+      margin-top: 30px;
+      font-size: 22px;
       font-weight: bold;
-      padding: 20px;
       border-top: 1px solid #222;
+      padding-top: 20px;
     }
 
-    @media (max-width: 600px) {
-      .settings-grid {
-        grid-template-columns: 1fr;
-      }
+    /* Responsywność dla telefonów */
+    @media (max-width: 768px) {
+      .settings-grid { grid-template-columns: 1fr 1fr; }
+      .full-width, .btn-start { grid-column: span 2; }
     }
   </style>
 </head>
 <body>
-  <h1>Panel Sterowania Atakiem</h1>
+  <h1>Wklej link do ataku lub wybierz gracza z listy,<br>ustal godzinę i interwał (losowy lub stały)</h1>
 
   <input type="text" id="linkInput" placeholder="Wklej tutaj link do ataku" />
 
   <div class="settings-grid">
-    <div class="form-group" style="grid-column: auto;">
-      <label>🎯 Wybierz cel</label>
+    <div class="form-group full-width">
+      <label>🎯 Wybierz cel z listy</label>
       <select id="linkSelector" onchange="selectLink(this)">
-        <option value="">⬇️ Lista graczy</option>
+        <option value="">⬇️ Lista zapisanych graczy</option>
         <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=3036661">Adanio</option>
         <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1196055">alkmaar</option>
         <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1273120">Anders</option>
@@ -226,26 +218,24 @@
     </div>
 
     <div class="form-group">
-      <label>🕓 Start (godzina)</label>
+      <label>🕓 Zaplanuj start</label>
       <input type="datetime-local" id="startTime" step="1"/>
     </div>
 
     <div class="form-group">
-      <label>🔁 Max prób</label>
-      <input type="number" id="attemptsLimit" placeholder="Opcjonalnie"/>
+      <label>🔁 Liczba prób</label>
+      <input type="number" id="attemptsLimit" placeholder="Np. 100"/>
     </div>
 
     <div class="form-group">
-      <label>⏱️ Min (ms)</label>
-      <input type="number" id="minMs" placeholder="120"/>
+      <label>⏱️ Min/Max ms</label>
+      <div style="display: flex; gap: 5px;">
+        <input type="number" id="minMs" placeholder="Min" style="width: 50%;"/>
+        <input type="number" id="maxMs" placeholder="Max" style="width: 50%;"/>
+      </div>
     </div>
 
-    <div class="form-group">
-      <label>⏱️ Max (ms)</label>
-      <input type="number" id="maxMs" placeholder="120"/>
-    </div>
-
-    <button class="btn-start" onclick="planOrStart()">Rozpocznij</button>
+    <button class="btn-start" onclick="planOrStart()">ROZPOCZNIJ ATTAK</button>
   </div>
 
   <div id="status">Wysłane ataki: 0</div>
@@ -258,80 +248,56 @@
 
     function selectLink(selectElement) {
       const selectedLink = selectElement.value;
-      if (selectedLink) {
-        document.getElementById("linkInput").value = selectedLink;
-      }
+      if (selectedLink) document.getElementById("linkInput").value = selectedLink;
     }
 
     function planOrStart() {
       const timeInput = document.getElementById("startTime").value;
       const link = document.getElementById("linkInput").value;
-
-      if (!link) {
-        alert("Wklej najpierw link!");
-        return;
-      }
+      if (!link) { alert("Wklej link!"); return; }
 
       if (timeInput) {
-        const now = new Date();
-        const plannedTime = new Date(timeInput);
-
-        if (plannedTime <= now) {
-          alert("Wybrana godzina już minęła!");
-          return;
-        }
-
-        const msToStart = plannedTime - now;
-        document.getElementById("status").innerText = `Zaplanowano na ${plannedTime.toLocaleTimeString()}...`;
-        
-        setTimeout(() => startSpam(link), msToStart);
+        const ms = new Date(timeInput) - new Date();
+        if (ms <= 0) { alert("Godzina już minęła!"); return; }
+        document.getElementById("status").innerText = `Czekam do ${new Date(timeInput).toLocaleTimeString()}...`;
+        setTimeout(() => startSpam(link), ms);
       } else {
         startSpam(link);
       }
     }
 
     function startSpam(link) {
-      openedCount = 0;
-      secondsLeft = 60;
-      clearTimeout(nextAttackTimer);
-      clearInterval(countdown);
+      openedCount = 0; secondsLeft = 60;
+      clearTimeout(nextAttackTimer); clearInterval(countdown);
 
       const attemptsLimit = parseInt(document.getElementById("attemptsLimit").value);
       const limitByAttempts = !isNaN(attemptsLimit) && attemptsLimit > 0;
+      const minI = parseInt(document.getElementById("minMs").value);
+      const maxI = parseInt(document.getElementById("maxMs").value);
       
-      const minInput = parseInt(document.getElementById("minMs").value);
-      const maxInput = parseInt(document.getElementById("maxMs").value);
-      
-      const minMs = !isNaN(minInput) ? minInput : (!isNaN(maxInput) ? maxInput : 120);
-      const maxMs = !isNaN(maxInput) ? maxInput : (!isNaN(minInput) ? minInput : 120);
+      const minMs = !isNaN(minI) ? minI : (!isNaN(maxI) ? maxI : 120);
+      const maxMs = !isNaN(maxI) ? maxI : (!isNaN(minI) ? minI : 120);
 
       const performAction = () => {
         if ((limitByAttempts && openedCount >= attemptsLimit) || secondsLeft <= 0) {
-          clearTimeout(nextAttackTimer);
-          return;
+          clearTimeout(nextAttackTimer); return;
         }
 
         fetch(link, { mode: 'no-cors' })
-          .then(() => {
-            openedCount++;
-            document.getElementById('status').innerText = `Wysłane ataki: ${openedCount}`;
-          })
-          .catch(() => {
-            openedCount++;
-            document.getElementById('status').innerText = `Wysłane ataki: ${openedCount}`;
-          });
+          .then(() => { openedCount++; updateStatus(); })
+          .catch(() => { openedCount++; updateStatus(); });
 
-        const randomDelay = Math.floor(Math.random() * (maxMs - minMs + 1)) + minMs;
-        nextAttackTimer = setTimeout(performAction, randomDelay);
+        nextAttackTimer = setTimeout(performAction, Math.floor(Math.random() * (maxMs - minMs + 1)) + minMs);
+      };
+
+      const updateStatus = () => {
+        document.getElementById('status').innerText = `Wysłane ataki: ${openedCount}`;
       };
 
       countdown = setInterval(() => {
         secondsLeft--;
-        document.title = `${secondsLeft}s - Spamownik`;
-        if (secondsLeft <= 0) {
-          clearInterval(countdown);
-          clearTimeout(nextAttackTimer);
-        }
+        document.title = `${secondsLeft}s - Atakowanie...`;
+        if (secondsLeft <= 0) { clearInterval(countdown); clearTimeout(nextAttackTimer); }
       }, 1000);
 
       performAction();
