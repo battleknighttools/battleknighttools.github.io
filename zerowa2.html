@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <title>60s - Spamownik Ataku</title>
+  <style>
+    :root {
+      --primary-red: #f00;
+      --hover-red: #d00;
+      --bg-black: #0a0a0a;
+      --input-bg: #1a1a1a;
+      --border-color: #333;
+    }
+
+    body {
+      background: #000;
+      color: var(--primary-red);
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      text-align: center;
+      max-width: 1000px;
+      margin: auto;
+      padding: 40px 20px;
+    }
+
+    h1 {
+      font-size: 1.1rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 25px;
+      line-height: 1.5;
+    }
+
+    #linkInput {
+      width: 100%;
+      padding: 15px;
+      background: var(--input-bg);
+      border: 1px solid var(--border-color);
+      color: #fff;
+      border-radius: 8px;
+      font-size: 16px;
+      margin-bottom: 20px;
+      box-sizing: border-box;
+    }
+
+    .settings-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 15px;
+      background: var(--bg-black);
+      padding: 20px;
+      border-radius: 12px;
+      border: 1px solid #222;
+      align-items: end;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      text-align: left;
+    }
+
+    .full-width { grid-column: span 3; }
+
+    label {
+      font-size: 11px;
+      font-weight: bold;
+      margin-bottom: 6px;
+      color: #888;
+      text-transform: uppercase;
+    }
+
+    input, select {
+      background: var(--input-bg);
+      border: 1px solid var(--border-color);
+      color: #fff;
+      padding: 12px;
+      border-radius: 6px;
+      font-size: 14px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .button-container {
+      grid-column: span 3;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+      margin-top: 10px;
+    }
+
+    .btn {
+      color: #fff;
+      font-weight: bold;
+      cursor: pointer;
+      border: none;
+      padding: 16px;
+      border-radius: 6px;
+      font-size: 16px;
+      transition: all 0.2s ease;
+      text-transform: uppercase;
+    }
+
+    .btn-start {
+      background-color: var(--primary-red);
+    }
+
+    .btn-start:hover {
+      background-color: var(--hover-red);
+      box-shadow: 0 0 15px rgba(255, 0, 0, 0.4);
+    }
+
+    .btn-stop {
+      background-color: #333;
+    }
+
+    .btn-stop:hover {
+      background-color: #444;
+    }
+
+    #status {
+      margin-top: 30px;
+      font-size: 22px;
+      font-weight: bold;
+      border-top: 1px solid #222;
+      padding-top: 20px;
+    }
+
+    @media (max-width: 768px) {
+      .settings-grid { grid-template-columns: 1fr 1fr; }
+      .full-width, .button-container { grid-column: span 2; }
+    }
+  </style>
+</head>
+<body>
+  <h1>Panel Sterowania Atakiem</h1>
+
+  <input type="text" id="linkInput" placeholder="Wklej tutaj link do ataku" />
+
+  <div class="settings-grid">
+    <div class="form-group full-width">
+      <label>🎯 Wybierz cel z listy</label>
+      <select id="linkSelector" onchange="selectLink(this)">
+        <option value="">⬇️ Lista zapisanych graczy</option>
+        <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=3036661">Adanio</option>
+        <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1196055">alkmaar</option>
+        <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1273120">Anders</option>
+        <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1371093">Angel</option>
+        <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=278496">Anija</option>
+        <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=421182">Armani</option>
+        <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=644623">Art z ZKM</option>
+        <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=692504">Artemis Entreri</option>
+        <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=937717">Avari</option>
+        <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1370932">Bad Boy</option>
+        <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1825170">BawariaMaster</option>
+        <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=2146091">Bescik</option>
+        <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1206973">Blackorwhite</option>
+        <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=3314116">Blood Avenger</option>
+        <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1360295">Bolko13</option>
+        <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1769080">Chaoss</option>
+        <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=3516861">Cruolelis</option>
+        <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=396931">cyklop</option>
+        <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=2512993">Damianus</option>
+        <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=25906">Dark Angel</option>
+        <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1334593">Dertiger</option>
+        <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1437476">DonDywizjon</option>
+        <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=2994381">Double U</option>
+        <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1437263">DRIFT-er</option>
+        <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=406208">Erovin</option>
+        <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=2943613">Eskel</option>
+        <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=2906775">Excalibur</option>
+        <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=2187176">Firewalker</option>
+        <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1344535">Fotograf</option>
+        <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=3441581">Grizmatic</option>
+        <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=3532967">Hadess</option>
+        <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=3594708">helcor</option>
+        <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1884189">Hemplar</option>
+        <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=3315451">Kabuto</option>
+        <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=2962919">kenobi</option>
+        <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1437324">KLFman</option>
+        <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=3618203">Kodama</option>
+        <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=3507540">Lady Karolina</option>
+        <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=3032661">Lolek</option>
+        <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=38845">Lord Nico</option>
+        <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1392608">Lubczyk</option>        
+        <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=2641612">Mariot I</option>
+        <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=3512008">Marox</option>
+        <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=357817">mikol</option>
+        <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=3385171">Mimir</option>
+        <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1337606">Monter</option>
+        <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=2898577">Muchomorek</option>
+        <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=320538">Mustafa</option>
+        <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=314124">MUTSU</option>
+        <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=3317909">Nicolas</option>
+        <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=3033575">Norton</option>
+        <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=2880">Papa Smurf</option>
+        <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=2165885">PENETRATOR</option>
+        <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1366171">Pikamin</option>
+        <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1439314">quazi</option>
+        <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=725">Sandruss</option>
+        <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1748771">Sanguis Vocare</option>
+        <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=2565560">saphira</option>
+        <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=2134832">SebsaNL</option>
+        <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=393244">ser Marcin z ZT</option>
+        <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=4331344">Sertia</option>
+        <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=2530420">Shizz</option>
+        <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=757377">Silver Arrow</option>
+        <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=3389482">Sir Kiler</option>
+        <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=369967">smigi</option>
+        <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=3095283">Soniakk</option>
+        <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=2512119">Spartanin</option>
+        <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=3089729">Sterry</option>
+        <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=2898296">Sthern</option>
+        <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=2122380">Sylan Zajn</option>
+        <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=3471417">Tatanka Yotanka</option>
+        <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=3037141">TEMIDA</option>
+        <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1263647">THE DARK 69</option>
+        <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=413237">Torquemada</option>
+        <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=492">Waleczny Q</option>
+        <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=408065">wandalos</option>
+        <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=2944566">warrior of the light</option>
+        <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1319755">wojtex a</option>
+        <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=682482">Wolfheart</option>
+        <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=3038326">yahoo</option>
+        <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=3070026">YellowPig</option>
+        <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=2975405">Zdrycz</option>
+        <option value="https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=2530244">Zeb McKane</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label>🕓 Zaplanuj start</label>
+      <input type="datetime-local" id="startTime" step="1"/>
+    </div>
+
+    <div class="form-group">
+      <label>🔁 Liczba prób</label>
+      <input type="number" id="attemptsLimit" placeholder="Opcjonalnie"/>
+    </div>
+
+    <div class="form-group">
+      <label>⏱️ Min/Max ms</label>
+      <div style="display: flex; gap: 5px;">
+        <input type="number" id="minMs" placeholder="Min"/>
+        <input type="number" id="maxMs" placeholder="Max"/>
+      </div>
+    </div>
+
+    <div class="button-container">
+      <button class="btn btn-start" onclick="planOrStart()">START</button>
+      <button class="btn btn-stop" onclick="stopSpam()">ZATRZYMAJ</button>
+    </div>
+  </div>
+
+  <div id="status">Wysłane ataki: 0</div>
+
+  <script>
+    let openedCount = 0;
+    let nextAttackTimer;
+    let countdown;
+    let secondsLeft = 60;
+    let isRunning = false;
+
+    function selectLink(selectElement) {
+      const selectedLink = selectElement.value;
+      if (selectedLink) document.getElementById("linkInput").value = selectedLink;
+    }
+
+    function stopSpam() {
+      isRunning = false;
+      clearTimeout(nextAttackTimer);
+      clearInterval(countdown);
+      document.getElementById("status").innerText += " (ZATRZYMANO)";
+      document.title = "Zatrzymano - Spamownik";
+    }
+
+    function planOrStart() {
+      const timeInput = document.getElementById("startTime").value;
+      const link = document.getElementById("linkInput").value;
+      if (!link) { alert("Wklej link!"); return; }
+
+      if (timeInput) {
+        const ms = new Date(timeInput) - new Date();
+        if (ms <= 0) { alert("Godzina już minęła!"); return; }
+        document.getElementById("status").innerText = `Czekam do ${new Date(timeInput).toLocaleTimeString()}...`;
+        setTimeout(() => startSpam(link), ms);
+      } else {
+        startSpam(link);
+      }
+    }
+
+    function startSpam(link) {
+      isRunning = true;
+      openedCount = 0;
+      secondsLeft = 60;
+      clearTimeout(nextAttackTimer);
+      clearInterval(countdown);
+
+      const attemptsLimit = parseInt(document.getElementById("attemptsLimit").value);
+      const limitByAttempts = !isNaN(attemptsLimit) && attemptsLimit > 0;
+      const minI = parseInt(document.getElementById("minMs").value);
+      const maxI = parseInt(document.getElementById("maxMs").value);
+      
+      const minMs = !isNaN(minI) ? minI : 120;
+      const maxMs = !isNaN(maxI) ? maxI : 120;
+
+      const performAction = () => {
+        if (!isRunning || (limitByAttempts && openedCount >= attemptsLimit) || secondsLeft <= 0) {
+          stopSpam();
+          return;
+        }
+
+        // System weryfikacji co 20 ataków (otwiera małe okno na 2 sekundy)
+        if (openedCount > 0 && openedCount % 20 === 0) {
+          const win = window.open(link, '_blank', 'width=200,height=200');
+          setTimeout(() => { if(win) win.close(); }, 2000);
+        }
+
+        fetch(link, { mode: 'no-cors' })
+          .then(() => { openedCount++; updateStatus(); })
+          .catch(() => { openedCount++; updateStatus(); });
+
+        const delay = Math.floor(Math.random() * (maxMs - minMs + 1)) + minMs;
+        nextAttackTimer = setTimeout(performAction, delay);
+      };
+
+      const updateStatus = () => {
+        document.getElementById('status').innerText = `Wysłane ataki: ${openedCount}`;
+      };
+
+      countdown = setInterval(() => {
+        secondsLeft--;
+        document.title = `${secondsLeft}s - Atakowanie...`;
+        if (secondsLeft <= 0) stopSpam();
+      }, 1000);
+
+      performAction();
+    }
+  </script>
+</body>
+</html>
