@@ -236,6 +236,27 @@
   <div id="status">Wysłane ataki: 0</div>
 
   <script>
+    // --- NOWA FUNKCJA USTAWIAJĄCA DOMYŚLNY CZAS ---
+    window.addEventListener('DOMContentLoaded', (event) => {
+        const now = new Date();
+        // Dodajemy 1 minutę (60000 milisekund)
+        const defaultTime = new Date(now.getTime() + 60000);
+        
+        // Formatowanie do ISO (YYYY-MM-DDTHH:mm) i dostosowanie do strefy czasowej
+        const year = defaultTime.getFullYear();
+        const month = String(defaultTime.getMonth() + 1).padStart(2, '0');
+        const day = String(defaultTime.getDate()).padStart(2, '0');
+        const hours = String(defaultTime.getHours()).padStart(2, '0');
+        const minutes = String(defaultTime.getMinutes()).padStart(2, '0');
+        const seconds = String(defaultTime.getSeconds()).padStart(2, '0');
+
+        const formattedDateTime = `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+        document.getElementById("startTime").value = formattedDateTime;
+    });
+    // --- KONIEC NOWEJ FUNKCJI ---
+
+    let openedCount = 0;
+    let attackWindow = null;
     let openedCount = 0;
     let attackWindow = null;
     let nextAttackTimer;
