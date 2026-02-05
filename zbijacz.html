@@ -1,422 +1,362 @@
 <!DOCTYPE html>
 <html lang="pl">
 <head>
-  <meta charset="UTF-8" />
-  <title>Zbijarka EX'pa</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 20px;
-      background: #121212;
-      color: #f0f0f0;
-      max-width: 800px;
-      margin: auto;
-      text-align: center;
-    }
-    textarea {
-      width: 100% !important;   /* Zajmie pełną szerokość dostępnego miejsca */
-      max-width: 100%;          /* Nie pozwoli wyjść poza ekran */
-      height: 250px !important; /* Wymusi wysokość na ok. 10-12 linków */
-      display: block;           /* Sprawi, że textarea będzie osobnym blokiem */
-      clear: both;              /* Zabroni innym elementom stać obok */
-      font-family: monospace;
-      background: #1e1e1e;
-      color: #f0f0f0;
-      border: 1px solid #34a853;
-      padding: 10px;
-      margin: 20px 0 !important; /* Doda wyraźny odstęp od góry i dołu */
+  <meta charset="UTF-8" />
+  <title>Zbijarka EX'pa</title>
+  <style>
+    /* Sensowne tło strony i ogólny styl */
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      padding: 20px;
+      background: #0f0f0f url('https://www.transparenttextures.com/patterns/dark-leather.png');
+      color: #e0e0e0;
+      max-width: 900px;
+      margin: auto;
+      text-align: center;
+    }
+
+    h2 {
+      color: #34a853;
+      text-shadow: 2px 2px 4px #000;
+      margin-bottom: 10px;
+    }
+
+    /* Naprawione okno linków */
+    textarea {
+      width: 100% !important;
+      height: 250px !important;
+      display: block;          /* Wymusza nową linię przed i po */
+      margin: 20px 0 !important;
+      font-family: 'Consolas', 'Monaco', monospace;
+      background: #1a1a1a;
+      color: #34a853;
+      border: 2px solid #333;
+      border-left: 4px solid #34a853;
+      padding: 12px;
       box-sizing: border-box;
       text-align: left;
       white-space: pre;
       overflow-x: auto;
+      border-radius: 4px;
+      box-shadow: inset 0 0 10px #000;
     }
-    input[type="number"],
-    select {
-      margin: 5px 10px 5px 0;
-      background: #1e1e1e;
-      color: #f0f0f0;
-      border: 1px solid #34a853;
-      padding: 5px;
-      box-sizing: border-box;
-      /* Usunięcie stałej szerokości dla suwaka */
-    }
-    /* Dodatkowe style dla suwaka i jego wartości */
+
+    /* Kontener dla opcji pod oknem */
+    .controls-row {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 20px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    input[type="number"], select {
+      background: #1e1e1e;
+      color: #f0f0f0;
+      border: 1px solid #34a853;
+      padding: 8px;
+      border-radius: 4px;
+    }
+
+    /* Suwak i opóźnienie */
     #delaySettings {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        margin-top: 15px;
-        padding: 10px;
-        border: 1px dashed #34a853;
-        border-radius: 5px;
+      background: rgba(52, 168, 83, 0.05);
+      padding: 15px;
+      border: 1px dashed #34a853;
+      border-radius: 8px;
+      margin-bottom: 20px;
     }
+
     .setting-row {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        width: 100%;
-        max-width: 400px;
-        margin-top: 5px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 15px;
+      width: 100%;
+      max-width: 500px;
+      margin: 10px auto;
     }
+
     input[type="range"] {
-        flex-grow: 1;
-        margin: 0 10px;
+      flex-grow: 1;
+      accent-color: #34a853;
     }
+
     #sliderValue {
-        min-width: 80px;
-        text-align: right;
-        font-weight: bold;
-        color: #f9d71c;
+      color: #f9d71c;
+      font-weight: bold;
+      min-width: 70px;
     }
 
-    /* Kontener przycisków */
-    #buttonsContainer {
-      margin-top: 10px;
-      display: flex;
-      flex-wrap: nowrap;
-      gap: 10px;
-      width: 100%;
-      box-sizing: border-box;
-      justify-content: center;
-    }
+    /* Przyciski */
+    #buttonsContainer {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 10px;
+      margin-bottom: 30px;
+    }
 
-    /* Wszystkie przyciski mają taką samą szerokość */
-    #buttonsContainer button {
-      flex: 1 1 0;
-      padding: 10px 0;
-      font-size: 18px;
-      background-color: #34a853;
-      color: #000;
-      border: none;
-      cursor: pointer;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 8px;
-      box-sizing: border-box;
-      white-space: nowrap;
-      max-width: 140px;
-    }
-    #buttonsContainer button:hover {
-      background-color: #5cd67a;
-    }
-    /* Przycisk reset na czerwono i na końcu */
-    #resetButton {
-      background-color: #d93025;
-      color: #fff;
-      flex: 1 0 auto;
-      min-width: 100px;
-      max-width: 120px;
-    }
-    #resetButton:hover {
-      background-color: #f44336;
-    }
+    button {
+      padding: 12px;
+      font-size: 14px;
+      font-weight: bold;
+      background-color: #34a853;
+      color: #000;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: 0.2s;
+      text-transform: uppercase;
+    }
 
-    #status,
-    #progress {
-      margin-top: 20px;
-      font-size: 18px;
-      color: #ccc;
-      text-align: center;
-      user-select: none;
-    }
-    #progress em {
-      color: #f9d71c;
-      font-weight: bold;
-      font-style: normal;
-    }
-    #linkList {
-      margin-top: 15px;
-      padding-left: 20px;
-      max-width: 800px;
-      margin-left: auto;
-      margin-right: auto;
-      text-align: left;
-    }
-    .link-item {
-      margin-bottom: 5px;
-      font-size: 16px;
-    }
-    strong {
-      color: #5cd67a;
-    }
-  </style>
+    button:hover {
+      background-color: #45c066;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+    }
+
+    #resetButton {
+      background-color: #d93025;
+      color: #fff;
+    }
+
+    #resetButton:hover {
+      background-color: #ff4d3d;
+    }
+
+    /* Status i lista */
+    #status {
+      font-weight: bold;
+      padding: 10px;
+      border-bottom: 1px solid #333;
+    }
+
+    #progress {
+      background: rgba(0,0,0,0.3);
+      padding: 15px;
+      border-radius: 4px;
+      margin: 10px 0;
+    }
+
+    #linkList {
+      text-align: left;
+      list-style: none;
+      padding: 0;
+      max-height: 300px;
+      overflow-y: auto;
+      border: 1px solid #222;
+      background: rgba(0,0,0,0.2);
+    }
+
+    .link-item {
+      padding: 5px 10px;
+      border-bottom: 1px solid #1a1a1a;
+      font-size: 14px;
+    }
+  </style>
 </head>
 <body>
-  <h2>Zautomatyzowana zbijarka EX'pa v0.34</h2>
-  <p>Wklej każdy link w osobnej linii lub upuść plik TXT z linkami:</p>
-  <br /><textarea
-    id="linkInput"
-    placeholder="https://example.com&#10;https://kolejny-link.pl"
-  ></textarea>
-  <br />
-  <label for="startFrom">Zacznij od linku nr:</label>
-  <input type="number" id="startFrom" value="1" min="1" />
 
-  <label for="baseInterval">Bazowy Interwał:</label>
-  <select id="baseInterval">
-      </select>
-  <br />
-    
-    <div id="delaySettings">
-        <label for="randomDelaySlider">Maksymalne Losowe Opóźnienie (ms):</label>
-        <div class="setting-row">
-            <span>0 ms</span>
-            <input 
-                type="range" 
-                id="randomDelaySlider" 
-                min="0" 
-                max="60000" 
-                step="1000" 
-                value="6000" 
-                oninput="updateSliderValue()"
-            >
-            <span id="sliderValue">6000 ms</span>
-        </div>
-        <small>(Opóźnienie jest losowo dodawane do interwału: 0ms do maks. ustawionej wartości)</small>
+  <h2>Zautomatyzowana zbijarka EX'pa v0.34</h2>
+  <p>Wklej linki (jeden pod drugim) lub upuść plik TXT:</p>
+
+  <textarea id="linkInput" placeholder="https://..."></textarea>
+
+  <div class="controls-row">
+    <div>
+      <label for="startFrom">Zacznij od nr:</label>
+      <input type="number" id="startFrom" value="1" min="1" style="width: 60px;" />
     </div>
+    <div>
+      <label for="baseInterval">Bazowy Interwał:</label>
+      <select id="baseInterval"></select>
+    </div>
+  </div>
 
-  <div id="buttonsContainer">
-    <button onclick="startOpening()">▶️ Start</button>
-    <button onclick="pauseOpening()">⏸️ Stop</button>
-    <button onclick="resumeOpening()">🔄 Wznów</button>
-    <button onclick="shuffleLinks()">🔀 Wymieszaj</button>
-    <button onclick="skipLink()">⏭️ Pomiń link</button>
-    <button id="resetButton" onclick="resetPage()">❌ RESET</button>
-  </div>
+  <div id="delaySettings">
+    <label>Maksymalne Losowe Opóźnienie (ms):</label>
+    <div class="setting-row">
+      <span>0 ms</span>
+      <input type="range" id="randomDelaySlider" min="0" max="60000" step="1000" value="6000" oninput="updateSliderValue()">
+      <span id="sliderValue">6000 ms</span>
+    </div>
+    <small style="color: #888;">(Dodawane losowo do interwału bazowego)</small>
+  </div>
 
-  <div id="status">Status: Oczekuję na start</div>
-  <div id="progress"></div>
-  <ul id="linkList"></ul>
+  <div id="buttonsContainer">
+    <button onclick="startOpening()">▶️ Start</button>
+    <button onclick="pauseOpening()">⏸️ Stop</button>
+    <button onclick="resumeOpening()">🔄 Wznów</button>
+    <button onclick="shuffleLinks()">🔀 Wymieszaj</button>
+    <button onclick="skipLink()">⏭️ Pomiń</button>
+    <button id="resetButton" onclick="resetPage()">❌ RESET</button>
+  </div>
 
-  <script>
-    let links = [];
-    let currentIndex = 0;
-    let paused = false;
-    let nextClickTime = null;
-    let timer;
-    let skippedIndexes = new Set();
-    
-    // --- NOWA FUNKCJA - Generowanie opcji interwału ---
+  <div id="status">Status: Oczekuję na start</div>
+  <div id="progress"></div>
+  <ul id="linkList"></ul>
+
+  <script>
+    let links = [];
+    let currentIndex = 0;
+    let paused = false;
+    let nextClickTime = null;
+    let timer;
+    let skippedIndexes = new Set();
+
     function populateIntervalOptions() {
         const select = document.getElementById('baseInterval');
         for (let i = 5; i <= 15; i++) {
             const option = document.createElement('option');
-            // Wartość w milisekundach
             option.value = i * 60 * 1000; 
             option.textContent = i + " minut";
-            // Ustawienie 10 minut jako domyślne (jeśli było w oryginalnym skrypcie)
-            if (i === 10) {
-                option.selected = true;
-            }
+            if (i === 10) option.selected = true;
             select.appendChild(option);
         }
     }
 
-    // --- NOWA FUNKCJA - Aktualizacja wartości suwaka ---
     function updateSliderValue() {
         const slider = document.getElementById('randomDelaySlider');
         const valueDisplay = document.getElementById('sliderValue');
         valueDisplay.textContent = slider.value + " ms";
     }
 
-    function updateProgress() {
+    function updateProgress() {
         const baseIntervalMs = parseInt(document.getElementById("baseInterval").value);
         const maxRandomDelayMs = parseInt(document.getElementById("randomDelaySlider").value);
-
-        const percent = ((currentIndex / links.length) * 100).toFixed(1);
-        const pdPoints = currentIndex * 3;
-        const remaining = links.length - currentIndex;
-
-        // Średni czas oczekiwania (ms) = Bazowy czas + (Max. Losowe Opóźnienie / 2)
+        const percent = links.length > 0 ? ((currentIndex / links.length) * 100).toFixed(1) : 0;
+        const pdPoints = currentIndex * 3;
+        const remaining = links.length - currentIndex;
         const avgDelayMs = baseIntervalMs + (maxRandomDelayMs / 2);
-        
-        // Szacowany czas do końca w minutach
         const etaMinutes = Math.ceil((remaining * avgDelayMs) / 60000);
 
-        document.getElementById("progress").innerHTML = `
-          Kliknięto ${currentIndex} / ${links.length} linków (${percent}%) — 
-          <strong>Zbite Punkty Doświadczenia: ${pdPoints}</strong><br>
-          <em>Szacowany czas do końca: ${etaMinutes} minut</em>
-        `;
-    }
+        document.getElementById("progress").innerHTML = `
+          Kliknięto ${currentIndex} / ${links.length} linków (${percent}%) — 
+          <span style="color: #34a853">PD: ${pdPoints}</span><br>
+          <em>Szacowany czas: ~${etaMinutes} min</em>
+        `;
+    }
 
-    function updateLinkList() {
-      const list = document.getElementById("linkList");
-      list.innerHTML = "";
-      links.forEach((link, index) => {
-        const li = document.createElement("li");
-        li.className = "link-item";
-        li.textContent = `${index + 1}. ${link}`;
-        // Kolor i ikona wg statusu linku:
-        if (index < currentIndex) {
-          if (skippedIndexes.has(index)) {
-            li.style.color = "#f9d71c";
-            li.prepend(document.createTextNode("🔄 "));
-          } else {
-            li.style.color = "#888";
-            li.prepend(document.createTextNode("✅ "));
-          }
-        } else if (index === currentIndex) {
-          li.style.color = "#34a853";
-          li.prepend(document.createTextNode("🔴 "));
-        } else {
-          li.style.color = "#f0f0f0";
-          li.prepend(document.createTextNode("🕓 "));
-        }
-        list.appendChild(li);
-      });
-    }
+    function updateLinkList() {
+      const list = document.getElementById("linkList");
+      list.innerHTML = "";
+      links.forEach((link, index) => {
+        const li = document.createElement("li");
+        li.className = "link-item";
+        li.textContent = `${index + 1}. ${link}`;
+        if (index < currentIndex) {
+          li.style.color = skippedIndexes.has(index) ? "#f9d71c" : "#666";
+          li.prepend(skippedIndexes.has(index) ? "🔄 " : "✅ ");
+        } else if (index === currentIndex) {
+          li.style.color = "#34a853";
+          li.style.fontWeight = "bold";
+          li.prepend("🔴 ");
+        } else {
+          li.prepend("🕓 ");
+        }
+        list.appendChild(li);
+      });
+    }
 
-    function formatTime(ms) {
-      const totalSec = ms / 1000;
-      const min = Math.floor(totalSec / 60);
-      const sec = Math.floor(totalSec % 60).toString().padStart(2, "0");
-      const decimal = Math.floor((totalSec % 1) * 100).toString().padStart(2, "0");
-      return `(${min}:${sec}.${decimal})`;
-    }
+    function formatTime(ms) {
+      const totalSec = ms / 1000;
+      const min = Math.floor(totalSec / 60);
+      const sec = Math.floor(totalSec % 60).toString().padStart(2, "0");
+      return `(${min}:${sec})`;
+    }
 
-    function updateTitleCountdown() {
-      if (!nextClickTime || paused || currentIndex >= links.length) return;
-      const now = Date.now();
-      const remaining = nextClickTime - now;
-      document.title = remaining > 0
-        ? `${formatTime(remaining)} Auto Link Opener`
-        : `Auto Link Opener`;
-    }
+    function updateTitleCountdown() {
+      if (!nextClickTime || paused || currentIndex >= links.length) return;
+      const now = Date.now();
+      const remaining = nextClickTime - now;
+      document.title = remaining > 0 ? `${formatTime(remaining)} Atak...` : `Zbijarka EX'pa`;
+    }
 
-    setInterval(updateTitleCountdown, 100);
+    setInterval(updateTitleCountdown, 100);
 
-    function openNextLink() {
-      if (paused || currentIndex >= links.length) {
-        if (currentIndex >= links.length) {
-          document.getElementById("status").innerText =
-            "Wszystkie linki zostały kliknięte.";
-          document.title = "Auto Link Opener - zakończono";
-        }
-        return;
-      }
-        
-        // --- NOWA LOGIKA OBLICZANIA OPÓŹNIENIA ---
-        const baseIntervalMs = parseInt(document.getElementById("baseInterval").value);
-        const maxRandomDelayMs = parseInt(document.getElementById("randomDelaySlider").value);
+    function openNextLink() {
+      if (paused || currentIndex >= links.length) {
+        if (currentIndex >= links.length) {
+          document.getElementById("status").innerText = "Zakończono!";
+        }
+        return;
+      }
+      
+      const baseIntervalMs = parseInt(document.getElementById("baseInterval").value);
+      const maxRandomDelayMs = parseInt(document.getElementById("randomDelaySlider").value);
+      const delay = baseIntervalMs + Math.floor(Math.random() * (maxRandomDelayMs + 1));
 
-        // Losowy czas z zakresu [0, maxRandomDelayMs]
-        const randomExtraDelay = Math.floor(Math.random() * (maxRandomDelayMs + 1)); 
-        // Całkowite opóźnienie = Czas Bazowy + Losowe Opóźnienie
-        const delay = baseIntervalMs + randomExtraDelay;
-        // --- KONIEC NOWEJ LOGIKI ---
+      const link = links[currentIndex];
+      const a = document.createElement("a");
+      a.href = link;
+      a.target = "_blank";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
 
-      const link = links[currentIndex];
-      const a = document.createElement("a");
-      a.href = link;
-      a.target = "_blank";
-      a.rel = "noopener";
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
+      document.getElementById("status").innerText = `Atak na link #${currentIndex + 1}`;
+      currentIndex++;
+      updateProgress();
+      updateLinkList();
 
-      document.getElementById("status").innerText =
-        `Kliknięto link #${currentIndex + 1}: ${link}`;
-      currentIndex++;
-      updateProgress();
-      updateLinkList();
+      nextClickTime = Date.now() + delay;
+      timer = setTimeout(openNextLink, delay);
+    }
 
-      nextClickTime = Date.now() + delay;
-      timer = setTimeout(openNextLink, delay);
-    }
+    function startOpening() {
+      clearTimeout(timer);
+      paused = false;
+      skippedIndexes.clear();
+      const input = document.getElementById("linkInput").value.trim();
+      links = input.split("\n").map(l => l.trim()).filter(l => l.length > 0);
+      if (links.length === 0) { alert("Wklej linki!"); return; }
+      currentIndex = Math.max(0, (parseInt(document.getElementById("startFrom").value) || 1) - 1);
+      updateProgress();
+      updateLinkList();
+      openNextLink();
+    }
 
-    function startOpening() {
-      clearTimeout(timer);
-      paused = false;
-      skippedIndexes.clear();
-      const input = document.getElementById("linkInput").value.trim();
-      links = input
-        .split("\n")
-        .map(link => link.trim())
-        .filter(link => link.length > 0);
-      const startFrom = parseInt(document.getElementById("startFrom").value) || 1;
-      if (links.length === 0) {
-        alert("Wklej co najmniej jeden link.");
-        return;
-      }
-      currentIndex = Math.max(0, startFrom - 1);
-      updateProgress();
-      updateLinkList();
-      openNextLink();
-    }
+    function pauseOpening() { paused = true; clearTimeout(timer); document.getElementById("status").innerText = "Wstrzymano."; }
+    function resumeOpening() { if (!paused || currentIndex >= links.length) return; paused = false; openNextLink(); }
+    function resetPage() { location.reload(); }
 
-    function pauseOpening() {
-      paused = true;
-      clearTimeout(timer);
-      document.title = `[Wstrzymano] Auto Link Opener`;
-      document.getElementById("status").innerText =
-        `Wstrzymano na linku #${currentIndex + 1}`;
-    }
+    function shuffleLinks() {
+      const input = document.getElementById("linkInput").value.trim();
+      const lines = input.split("\n").filter(l => l.trim().length > 0);
+      for (let i = lines.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [lines[i], lines[j]] = [lines[j], lines[i]];
+      }
+      document.getElementById("linkInput").value = lines.join("\n");
+    }
 
-    function resumeOpening() {
-      if (!paused || currentIndex >= links.length) return;
-      paused = false;
-      document.getElementById("status").innerText =
-        `Wznawiam od linku #${currentIndex + 1}`;
-      openNextLink();
-    }
+    function skipLink() {
+      if (paused || currentIndex >= links.length) return;
+      clearTimeout(timer);
+      skippedIndexes.add(currentIndex);
+      currentIndex++;
+      updateProgress();
+      updateLinkList();
+      openNextLink();
+    }
 
-    function resetPage() {
-      location.reload();
-    }
+    // Obsługa przeciągania plików
+    const textarea = document.getElementById("linkInput");
+    textarea.addEventListener("dragover", e => e.preventDefault());
+    textarea.addEventListener("drop", e => {
+      e.preventDefault();
+      const file = e.dataTransfer.files[0];
+      if (file && file.name.endsWith(".txt")) {
+        const reader = new FileReader();
+        reader.onload = () => { textarea.value = reader.result; };
+        reader.readAsText(file);
+      }
+    });
 
-    function shuffleLinks() {
-      const input = document.getElementById("linkInput").value.trim();
-      const lines = input
-        .split("\n")
-        .map(line => line.trim())
-        .filter(line => line.length > 0);
-      for (let i = lines.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [lines[i], lines[j]] = [lines[j], lines[i]];
-      }
-      document.getElementById("linkInput").value = lines.join("\n");
-    }
-
-    function skipLink() {
-      if (paused || currentIndex >= links.length) return;
-      clearTimeout(timer);
-      skippedIndexes.add(currentIndex);
-      document.getElementById("status").innerText =
-        `Pominięto link #${currentIndex + 1}: ${links[currentIndex]}`;
-      currentIndex++;
-      updateProgress();
-      updateLinkList();
-
-      if (currentIndex < links.length) {
-        openNextLink();
-      } else {
-        document.getElementById("status").innerText =
-          "Wszystkie linki zostały kliknięte.";
-        document.title = "Auto Link Opener - zakończono";
-      }
-    }
-
-    const textarea = document.getElementById("linkInput");
-    textarea.addEventListener("dragover", e => e.preventDefault());
-    textarea.addEventListener("drop", e => {
-      e.preventDefault();
-      const file = e.dataTransfer.files[0];
-      if (file && file.name.endsWith(".txt")) {
-        const reader = new FileReader();
-        reader.onload = () => {
-          textarea.value = reader.result;
-        };
-        reader.readAsText(file);
-      }
-    });
-
-// Inicjalizacja: Generowanie opcji i aktualizacja wartości suwaka
-    document.addEventListener('DOMContentLoaded', () => {
-        // Predefiniowana lista linków do ataku
-        const predefiniowaneLinki = `
-https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=12167
+    // Inicjalizacja linków
+    document.addEventListener('DOMContentLoaded', () => {
+        const predefiniowaneLinki = `https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=12167
 https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=12168
 https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=12169
 https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=12171
@@ -917,12 +857,10 @@ https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340301
 https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340302
 https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340303`;
 
-        // Wstawienie linków do pola tekstowego
-        document.getElementById("linkInput").value = predefiniowaneLinki;
-
-        populateIntervalOptions();
-        updateSliderValue();
-    });
-  </script>
+        document.getElementById("linkInput").value = predefiniowaneLinki.trim();
+        populateIntervalOptions();
+        updateSliderValue();
+    });
+  </script>
 </body>
 </html>
