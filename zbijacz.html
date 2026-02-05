@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <title>Zbijarka EX'pa</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background: #121212;
+      color: #f0f0f0;
+      max-width: 800px;
+      margin: auto;
+      text-align: center;
+    }
+    textarea {
+      width: 100%;
+      height: 200px;
+      resize: vertical;
+      font-family: monospace;
+      background: #1e1e1e;
+      color: #f0f0f0;
+      border: 1px solid #34a853;
+      padding: 10px;
+      margin-top: 10px;
+      box-sizing: border-box;
+      text-align: left;
+    }
+    input[type="number"],
+    select {
+      margin: 5px 10px 5px 0;
+      background: #1e1e1e;
+      color: #f0f0f0;
+      border: 1px solid #34a853;
+      padding: 5px;
+      box-sizing: border-box;
+      /* Usunięcie stałej szerokości dla suwaka */
+    }
+    /* Dodatkowe style dla suwaka i jego wartości */
+    #delaySettings {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-top: 15px;
+        padding: 10px;
+        border: 1px dashed #34a853;
+        border-radius: 5px;
+    }
+    .setting-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+        max-width: 400px;
+        margin-top: 5px;
+    }
+    input[type="range"] {
+        flex-grow: 1;
+        margin: 0 10px;
+    }
+    #sliderValue {
+        min-width: 80px;
+        text-align: right;
+        font-weight: bold;
+        color: #f9d71c;
+    }
+
+    /* Kontener przycisków */
+    #buttonsContainer {
+      margin-top: 10px;
+      display: flex;
+      flex-wrap: nowrap;
+      gap: 10px;
+      width: 100%;
+      box-sizing: border-box;
+      justify-content: center;
+    }
+
+    /* Wszystkie przyciski mają taką samą szerokość */
+    #buttonsContainer button {
+      flex: 1 1 0;
+      padding: 10px 0;
+      font-size: 18px;
+      background-color: #34a853;
+      color: #000;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      box-sizing: border-box;
+      white-space: nowrap;
+      max-width: 140px;
+    }
+    #buttonsContainer button:hover {
+      background-color: #5cd67a;
+    }
+    /* Przycisk reset na czerwono i na końcu */
+    #resetButton {
+      background-color: #d93025;
+      color: #fff;
+      flex: 1 0 auto;
+      min-width: 100px;
+      max-width: 120px;
+    }
+    #resetButton:hover {
+      background-color: #f44336;
+    }
+
+    #status,
+    #progress {
+      margin-top: 20px;
+      font-size: 18px;
+      color: #ccc;
+      text-align: center;
+      user-select: none;
+    }
+    #progress em {
+      color: #f9d71c;
+      font-weight: bold;
+      font-style: normal;
+    }
+    #linkList {
+      margin-top: 15px;
+      padding-left: 20px;
+      max-width: 800px;
+      margin-left: auto;
+      margin-right: auto;
+      text-align: left;
+    }
+    .link-item {
+      margin-bottom: 5px;
+      font-size: 16px;
+    }
+    strong {
+      color: #5cd67a;
+    }
+  </style>
+</head>
+<body>
+  <h2>Zautomatyzowana zbijarka EX'pa v0.33</h2>
+  <p>Wklej każdy link w osobnej linii lub upuść plik TXT z linkami:</p>
+  <textarea
+    id="linkInput"
+    placeholder="https://example.com&#10;https://kolejny-link.pl"
+  ></textarea>
+  <br />
+  <label for="startFrom">Zacznij od linku nr:</label>
+  <input type="number" id="startFrom" value="1" min="1" />
+
+  <label for="baseInterval">Bazowy Interwał:</label>
+  <select id="baseInterval">
+      </select>
+  <br />
+    
+    <div id="delaySettings">
+        <label for="randomDelaySlider">Maksymalne Losowe Opóźnienie (ms):</label>
+        <div class="setting-row">
+            <span>0 ms</span>
+            <input 
+                type="range" 
+                id="randomDelaySlider" 
+                min="0" 
+                max="60000" 
+                step="1000" 
+                value="6000" 
+                oninput="updateSliderValue()"
+            >
+            <span id="sliderValue">6000 ms</span>
+        </div>
+        <small>(Opóźnienie jest losowo dodawane do interwału: 0ms do maks. ustawionej wartości)</small>
+    </div>
+
+  <div id="buttonsContainer">
+    <button onclick="startOpening()">▶️ Start</button>
+    <button onclick="pauseOpening()">⏸️ Stop</button>
+    <button onclick="resumeOpening()">🔄 Wznów</button>
+    <button onclick="shuffleLinks()">🔀 Wymieszaj</button>
+    <button onclick="skipLink()">⏭️ Pomiń link</button>
+    <button id="resetButton" onclick="resetPage()">❌ RESET</button>
+  </div>
+
+  <div id="status">Status: Oczekuję na start</div>
+  <div id="progress"></div>
+  <ul id="linkList"></ul>
+
+  <script>
+    let links = [];
+    let currentIndex = 0;
+    let paused = false;
+    let nextClickTime = null;
+    let timer;
+    let skippedIndexes = new Set();
+    
+    // --- NOWA FUNKCJA - Generowanie opcji interwału ---
+    function populateIntervalOptions() {
+        const select = document.getElementById('baseInterval');
+        for (let i = 5; i <= 15; i++) {
+            const option = document.createElement('option');
+            // Wartość w milisekundach
+            option.value = i * 60 * 1000; 
+            option.textContent = i + " minut";
+            // Ustawienie 10 minut jako domyślne (jeśli było w oryginalnym skrypcie)
+            if (i === 10) {
+                option.selected = true;
+            }
+            select.appendChild(option);
+        }
+    }
+
+    // --- NOWA FUNKCJA - Aktualizacja wartości suwaka ---
+    function updateSliderValue() {
+        const slider = document.getElementById('randomDelaySlider');
+        const valueDisplay = document.getElementById('sliderValue');
+        valueDisplay.textContent = slider.value + " ms";
+    }
+
+    function updateProgress() {
+        const baseIntervalMs = parseInt(document.getElementById("baseInterval").value);
+        const maxRandomDelayMs = parseInt(document.getElementById("randomDelaySlider").value);
+
+        const percent = ((currentIndex / links.length) * 100).toFixed(1);
+        const pdPoints = currentIndex * 3;
+        const remaining = links.length - currentIndex;
+
+        // Średni czas oczekiwania (ms) = Bazowy czas + (Max. Losowe Opóźnienie / 2)
+        const avgDelayMs = baseIntervalMs + (maxRandomDelayMs / 2);
+        
+        // Szacowany czas do końca w minutach
+        const etaMinutes = Math.ceil((remaining * avgDelayMs) / 60000);
+
+        document.getElementById("progress").innerHTML = `
+          Kliknięto ${currentIndex} / ${links.length} linków (${percent}%) — 
+          <strong>Zbite Punkty Doświadczenia: ${pdPoints}</strong><br>
+          <em>Szacowany czas do końca: ${etaMinutes} minut</em>
+        `;
+    }
+
+    function updateLinkList() {
+      const list = document.getElementById("linkList");
+      list.innerHTML = "";
+      links.forEach((link, index) => {
+        const li = document.createElement("li");
+        li.className = "link-item";
+        li.textContent = `${index + 1}. ${link}`;
+        // Kolor i ikona wg statusu linku:
+        if (index < currentIndex) {
+          if (skippedIndexes.has(index)) {
+            li.style.color = "#f9d71c";
+            li.prepend(document.createTextNode("🔄 "));
+          } else {
+            li.style.color = "#888";
+            li.prepend(document.createTextNode("✅ "));
+          }
+        } else if (index === currentIndex) {
+          li.style.color = "#34a853";
+          li.prepend(document.createTextNode("🔴 "));
+        } else {
+          li.style.color = "#f0f0f0";
+          li.prepend(document.createTextNode("🕓 "));
+        }
+        list.appendChild(li);
+      });
+    }
+
+    function formatTime(ms) {
+      const totalSec = ms / 1000;
+      const min = Math.floor(totalSec / 60);
+      const sec = Math.floor(totalSec % 60).toString().padStart(2, "0");
+      const decimal = Math.floor((totalSec % 1) * 100).toString().padStart(2, "0");
+      return `(${min}:${sec}.${decimal})`;
+    }
+
+    function updateTitleCountdown() {
+      if (!nextClickTime || paused || currentIndex >= links.length) return;
+      const now = Date.now();
+      const remaining = nextClickTime - now;
+      document.title = remaining > 0
+        ? `${formatTime(remaining)} Auto Link Opener`
+        : `Auto Link Opener`;
+    }
+
+    setInterval(updateTitleCountdown, 100);
+
+    function openNextLink() {
+      if (paused || currentIndex >= links.length) {
+        if (currentIndex >= links.length) {
+          document.getElementById("status").innerText =
+            "Wszystkie linki zostały kliknięte.";
+          document.title = "Auto Link Opener - zakończono";
+        }
+        return;
+      }
+        
+        // --- NOWA LOGIKA OBLICZANIA OPÓŹNIENIA ---
+        const baseIntervalMs = parseInt(document.getElementById("baseInterval").value);
+        const maxRandomDelayMs = parseInt(document.getElementById("randomDelaySlider").value);
+
+        // Losowy czas z zakresu [0, maxRandomDelayMs]
+        const randomExtraDelay = Math.floor(Math.random() * (maxRandomDelayMs + 1)); 
+        // Całkowite opóźnienie = Czas Bazowy + Losowe Opóźnienie
+        const delay = baseIntervalMs + randomExtraDelay;
+        // --- KONIEC NOWEJ LOGIKI ---
+
+      const link = links[currentIndex];
+      const a = document.createElement("a");
+      a.href = link;
+      a.target = "_blank";
+      a.rel = "noopener";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+
+      document.getElementById("status").innerText =
+        `Kliknięto link #${currentIndex + 1}: ${link}`;
+      currentIndex++;
+      updateProgress();
+      updateLinkList();
+
+      nextClickTime = Date.now() + delay;
+      timer = setTimeout(openNextLink, delay);
+    }
+
+    function startOpening() {
+      clearTimeout(timer);
+      paused = false;
+      skippedIndexes.clear();
+      const input = document.getElementById("linkInput").value.trim();
+      links = input
+        .split("\n")
+        .map(link => link.trim())
+        .filter(link => link.length > 0);
+      const startFrom = parseInt(document.getElementById("startFrom").value) || 1;
+      if (links.length === 0) {
+        alert("Wklej co najmniej jeden link.");
+        return;
+      }
+      currentIndex = Math.max(0, startFrom - 1);
+      updateProgress();
+      updateLinkList();
+      openNextLink();
+    }
+
+    function pauseOpening() {
+      paused = true;
+      clearTimeout(timer);
+      document.title = `[Wstrzymano] Auto Link Opener`;
+      document.getElementById("status").innerText =
+        `Wstrzymano na linku #${currentIndex + 1}`;
+    }
+
+    function resumeOpening() {
+      if (!paused || currentIndex >= links.length) return;
+      paused = false;
+      document.getElementById("status").innerText =
+        `Wznawiam od linku #${currentIndex + 1}`;
+      openNextLink();
+    }
+
+    function resetPage() {
+      location.reload();
+    }
+
+    function shuffleLinks() {
+      const input = document.getElementById("linkInput").value.trim();
+      const lines = input
+        .split("\n")
+        .map(line => line.trim())
+        .filter(line => line.length > 0);
+      for (let i = lines.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [lines[i], lines[j]] = [lines[j], lines[i]];
+      }
+      document.getElementById("linkInput").value = lines.join("\n");
+    }
+
+    function skipLink() {
+      if (paused || currentIndex >= links.length) return;
+      clearTimeout(timer);
+      skippedIndexes.add(currentIndex);
+      document.getElementById("status").innerText =
+        `Pominięto link #${currentIndex + 1}: ${links[currentIndex]}`;
+      currentIndex++;
+      updateProgress();
+      updateLinkList();
+
+      if (currentIndex < links.length) {
+        openNextLink();
+      } else {
+        document.getElementById("status").innerText =
+          "Wszystkie linki zostały kliknięte.";
+        document.title = "Auto Link Opener - zakończono";
+      }
+    }
+
+    const textarea = document.getElementById("linkInput");
+    textarea.addEventListener("dragover", e => e.preventDefault());
+    textarea.addEventListener("drop", e => {
+      e.preventDefault();
+      const file = e.dataTransfer.files[0];
+      if (file && file.name.endsWith(".txt")) {
+        const reader = new FileReader();
+        reader.onload = () => {
+          textarea.value = reader.result;
+        };
+        reader.readAsText(file);
+      }
+    });
+
+// Inicjalizacja: Generowanie opcji i aktualizacja wartości suwaka
+    document.addEventListener('DOMContentLoaded', () => {
+        // Predefiniowana lista linków do ataku
+        const predefiniowaneLinki = `
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=12167
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=12168
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=12169
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=12171
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=12173
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=12177
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=12185
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=12191
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=12199
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=12206
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=12212
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=12216
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1338256
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1338260
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1338350
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1338661
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1338678
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339246
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339249
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339250
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339253
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339256
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339257
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339259
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339262
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339265
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339267
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339268
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339270
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339271
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339273
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339274
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339275
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339277
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339281
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339283
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339285
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339286
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339288
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339290
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339292
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339294
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339299
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339301
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339304
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339306
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339342
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339353
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339359
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339362
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339363
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339371
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339373
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339378
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339384
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339388
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339391
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339395
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339397
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339399
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339405
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339408
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339417
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339418
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339420
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339429
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339435
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339437
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339442
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339444
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339445
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339446
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339448
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339452
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339453
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339455
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339456
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339460
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339461
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339462
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339465
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339466
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339468
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339469
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339471
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339472
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339474
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339477
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339478
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339484
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339488
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339492
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339496
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339497
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339501
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339502
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339535
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339542
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339547
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339551
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339553
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339559
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339577
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339586
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339588
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339595
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339597
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339598
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339604
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339606
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339625
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339642
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339643
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339646
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339648
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339653
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339655
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339657
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339660
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339663
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339666
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339670
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339671
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339672
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339676
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339678
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339679
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339683
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339684
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339686
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339687
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339691
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339692
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339693
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339695
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339697
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339698
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339699
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339700
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339705
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339707
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339708
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339709
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339710
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339711
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339713
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339714
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339715
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339718
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339720
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339723
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339728
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339729
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339730
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339732
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339734
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339735
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339736
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339742
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339743
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339747
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339748
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339750
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339753
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339754
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339756
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339757
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339758
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339759
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339760
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339761
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339762
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339763
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339764
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339765
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339767
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339771
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339772
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339773
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339774
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339775
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339777
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339778
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339779
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339780
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339781
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339783
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339784
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339787
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339788
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339789
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339790
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339791
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339793
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339794
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339795
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339796
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339797
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339798
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339799
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339800
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339802
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339804
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339806
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339807
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339808
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339809
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339810
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339812
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339813
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339814
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339815
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339816
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339817
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339819
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339821
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339823
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339824
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339827
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339829
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339830
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339831
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339832
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339833
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339835
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339838
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339839
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339840
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339841
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339842
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339843
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339844
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339845
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339848
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339849
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339850
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339851
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339852
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339854
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339855
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339857
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339858
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339860
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339861
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339862
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339863
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339864
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339865
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339866
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339867
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339868
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339870
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339872
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339873
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339874
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339875
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339876
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339877
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339878
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339880
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339883
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339884
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339889
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339890
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339891
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339892
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339894
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339895
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339897
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339898
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339899
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339901
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339902
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339904
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339905
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339908
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339909
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339911
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339912
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339913
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339914
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339915
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339916
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339917
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339923
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339924
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339925
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339927
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339929
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339932
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339935
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339936
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339937
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339938
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339939
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339940
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339941
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339942
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339944
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339945
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339950
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339951
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339952
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339953
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339954
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339955
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339956
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339958
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339959
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339961
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339964
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339965
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339967
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339968
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339970
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339973
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339976
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339978
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339979
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339981
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339982
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339983
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339984
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339985
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339986
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339988
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339989
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339990
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339991
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339992
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339994
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339995
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339996
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1339999
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340002
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340004
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340006
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340008
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340009
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340010
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340011
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340012
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340014
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340016
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340017
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340018
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340019
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340020
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340021
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340022
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340023
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340025
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340027
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340028
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340029
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340030
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340031
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340032
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340033
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340034
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340035
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340036
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340037
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340038
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340039
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340040
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340041
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340043
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340045
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340046
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340047
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340049
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340051
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340054
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340056
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340057
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340058
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340059
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340060
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340061
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340062
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340064
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340067
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340068
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340069
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340070
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340072
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340073
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340074
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340076
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340078
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340079
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340080
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340081
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340082
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340085
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340086
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340087
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340088
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340090
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340091
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340092
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340094
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340097
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340102
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340105
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340106
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340107
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340109
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340110
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340113
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340114
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340115
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340117
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340119
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340120
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340122
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340125
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340126
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340127
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340128
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340129
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340130
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340131
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340132
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340134
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340138
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340141
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340142
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340143
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340150
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340153
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340154
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340158
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340160
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340161
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340162
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340163
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340165
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340169
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340170
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340173
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340174
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340176
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340178
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340179
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340187
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340188
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340190
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340191
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340193
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340194
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340195
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340198
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340199
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340204
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340206
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340209
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340211
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340212
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340213
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340214
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340215
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340216
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340218
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340219
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340221
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340222
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340223
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340224
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340226
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340227
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340229
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340230
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340233
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340239
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340244
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340247
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340248
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340250
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340251
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340255
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340260
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340263
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340266
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340269
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340271
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340276
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340278
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340279
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340280
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340284
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340287
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340289
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340295
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340296
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340297
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340301
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340302
+https://s55-pl.battleknight.gameforge.com/duel/duel/?enemyID=1340303`;
+
+        // Wstawienie linków do pola tekstowego
+        document.getElementById("linkInput").value = predefiniowaneLinki;
+
+        populateIntervalOptions();
+        updateSliderValue();
+    });
+  </script>
+</body>
+</html>
