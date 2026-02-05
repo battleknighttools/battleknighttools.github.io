@@ -14,18 +14,20 @@
       text-align: center;
     }
     textarea {
-      width: 100%;
-      height: 200px;
-      resize: vertical;
-      font-family: monospace;
-      background: #1e1e1e;
-      color: #f0f0f0;
-      border: 1px solid #34a853;
-      padding: 10px;
-      margin-top: 10px;
-      box-sizing: border-box;
-      text-align: left;
-    }
+      width: 50%;             /* Zajmie całą szerokość strony (max 800px) */
+      height: 240px;           /* Wysokość idealna na ok. 10 linii tekstu */
+      display: block;          /* Wymusza zachowanie blokowe */
+      font-family: monospace;
+      background: #1e1e1e;
+      color: #f0f0f0;
+      border: 1px solid #34a853;
+      padding: 10px;
+      margin: 10px auto;       /* Centrowanie i odstęp od góry */
+      box-sizing: border-box;
+      text-align: left;
+      white-space: pre;        /* Linki nie będą się zawijać (jeden pod drugim) */
+      overflow-x: auto;        /* Pojawi się pasek przewijania, jeśli link będzie za długi */
+    }
     input[type="number"],
     select {
       margin: 5px 10px 5px 0;
