@@ -14,18 +14,20 @@
       text-align: center;
     }
     textarea {
-      width: 100% !important;  /* Wymuszamy pełną szerokość kontenera (800px) */
-      height: 250px;           /* Wysokość na ok. 10-12 linków */
-      display: block;
+      width: 100% !important;   /* Zajmie pełną szerokość dostępnego miejsca */
+      max-width: 100%;          /* Nie pozwoli wyjść poza ekran */
+      height: 250px !important; /* Wymusi wysokość na ok. 10-12 linków */
+      display: block;           /* Sprawi, że textarea będzie osobnym blokiem */
+      clear: both;              /* Zabroni innym elementom stać obok */
       font-family: monospace;
       background: #1e1e1e;
       color: #f0f0f0;
       border: 1px solid #34a853;
       padding: 10px;
-      margin: 10px 0;          /* Usunięcie auto marginu przy 100% szerokości */
+      margin: 20px 0 !important; /* Doda wyraźny odstęp od góry i dołu */
       box-sizing: border-box;
       text-align: left;
-      white-space: pre;        /* Ważne: linki nie będą zawijane, każdy w jednej linii */
+      white-space: pre;
       overflow-x: auto;
     }
     input[type="number"],
@@ -143,7 +145,7 @@
 <body>
   <h2>Zautomatyzowana zbijarka EX'pa v0.34</h2>
   <p>Wklej każdy link w osobnej linii lub upuść plik TXT z linkami:</p>
-  <textarea
+  <br /><textarea
     id="linkInput"
     placeholder="https://example.com&#10;https://kolejny-link.pl"
   ></textarea>
