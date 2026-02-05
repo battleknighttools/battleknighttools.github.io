@@ -14,19 +14,19 @@
       text-align: center;
     }
     textarea {
-      width: 50%;             /* Zajmie całą szerokość strony (max 800px) */
-      height: 240px;           /* Wysokość idealna na ok. 10 linii tekstu */
-      display: block;          /* Wymusza zachowanie blokowe */
+      width: 100% !important;  /* Wymuszamy pełną szerokość kontenera (800px) */
+      height: 250px;           /* Wysokość na ok. 10-12 linków */
+      display: block;
       font-family: monospace;
       background: #1e1e1e;
       color: #f0f0f0;
       border: 1px solid #34a853;
       padding: 10px;
-      margin: 10px auto;       /* Centrowanie i odstęp od góry */
+      margin: 10px 0;          /* Usunięcie auto marginu przy 100% szerokości */
       box-sizing: border-box;
       text-align: left;
-      white-space: pre;        /* Linki nie będą się zawijać (jeden pod drugim) */
-      overflow-x: auto;        /* Pojawi się pasek przewijania, jeśli link będzie za długi */
+      white-space: pre;        /* Ważne: linki nie będą zawijane, każdy w jednej linii */
+      overflow-x: auto;
     }
     input[type="number"],
     select {
