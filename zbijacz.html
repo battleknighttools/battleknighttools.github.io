@@ -207,7 +207,7 @@
 
     function populateIntervalOptions() {
         const select = document.getElementById('baseInterval');
-        for (let i = 5; i <= 15; i++) {
+        for (let i = 0; i <= 12; i++) {
             const option = document.createElement('option');
             option.value = i * 60 * 1000; 
             option.textContent = i + " minut";
